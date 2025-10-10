@@ -1,0 +1,107 @@
+.bg-navy { background-color: #0A2342 !important; }
+.text-navy { color: #0A2342 !important; }
+.bg-yellow { background-color: #FFD43B !important; }
+.text-yellow { color: #FFD43B !important; }
+
+.btn-yellow {
+    background-color: #FFD43B;
+    color: #0A2342;
+    border: none;
+    transition: 0.3s;
+}
+.btn-yellow:hover {
+    background-color: #e0bf34;
+    color: #000;
+}
+
+.btn-outline-navy {
+    border: 2px solid #0A2342;
+    color: #0A2342;
+    transition: 0.3s;
+}
+.btn-outline-navy:hover {
+    background-color: #0A2342;
+    color: #FFD43B;
+}
+
+.hero {
+    background: linear-gradient(to bottom, #fdfdfd, #ffffff);
+    min-height: 90vh;
+}
+
+.card-img-overlay {
+    background: linear-gradient(180deg, transparent 60%, rgba(10,35,66,0.85) 100%);
+    border-radius: 10px;
+}
+
+.text-white{
+    margin-top: 50px !important;
+}
+
+.services-section {
+    background-color: #f8f9fa;
+}
+
+.service-card {
+    transition: all 0.3s ease;
+}
+
+.service-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.btn-yellow {
+    background-color: #FFD700;
+    color: #000;
+    border: none;
+}
+
+.btn-yellow:hover {
+    background-color: #FFC300;
+    color: #fff;
+}
+
+.card.bg-black .text-muted {
+  color: #ccc !important;
+}
+
+.btn-primary{
+    color: black;
+    background-color: white;
+}
+
+.btn-primary:hover{
+    background-color: #0A2342;
+    color: #FFD43B;
+}
+
+.btn-view-all {
+  background-color: black;
+  color: #fff;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.btn-view-all:hover {
+  background-color: rgb(66, 61, 61);
+  color: #fff;
+}
+
+footer {
+    font-size: 0.9rem;
+}
+
+/* RideNow brand color (matches vehicle price) */
+.text-brand {
+  color: #ffcc00 !important; /* same as your vehicle price color */
+}
+
+/* Footer icon color */
+.footer-icon {
+  color: #ffcc00 !important;
+}
+
+
