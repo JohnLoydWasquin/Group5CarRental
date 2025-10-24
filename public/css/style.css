@@ -1,7 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&display=swap');
+
 .bg-navy { background-color: #0A2342 !important; }
 .text-navy { color: #0A2342 !important; }
 .bg-yellow { background-color: #FFD43B !important; }
 .text-yellow { color: #FFD43B !important; }
+
+body {
+    font-family: 'Geist Mono', monospace;
+    overflow-x: hidden;
+}
 
 .btn-yellow {
     background-color: #FFD43B;
@@ -27,6 +34,13 @@
 .hero {
     background: linear-gradient(to bottom, #fdfdfd, #ffffff);
     min-height: 90vh;
+}
+
+.hero-center{
+    margin-top: 50px;
+    min-height: 85vh;
+    display: flex;
+    align-items: center;
 }
 
 .card-img-overlay {
@@ -94,14 +108,36 @@ footer {
     font-size: 0.9rem;
 }
 
-/* RideNow brand color (matches vehicle price) */
 .text-brand {
-  color: #ffcc00 !important; /* same as your vehicle price color */
+  color: #ffcc00 !important;
 }
 
-/* Footer icon color */
 .footer-icon {
   color: #ffcc00 !important;
+}
+
+.hero-section {
+  background: url("../images/AutoPilotoAboutBg.jpg") no-repeat center center/cover;
+  min-height: 100vh;
+  position: relative;
+}
+
+.hero-section .overlay {
+  background-color: rgba(0, 0, 0, 0.5);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.service-box {
+  transition: all 0.3s ease-in-out;
+}
+
+.service-box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
 

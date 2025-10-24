@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<section class="hero py-5" data-aos="fade-left">
-    <div class="container" data-aos="fade-left">
+<section class="hero hero-center" data-aos="fade-left">
+    <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-6 mb-5 mb-lg-0" data-aos="fade-right">
                 <span class="badge bg-yellow text-navy fw-bold mb-3">2025 Top Rental Partners</span>
@@ -14,7 +14,6 @@
                     <a href="#" class="btn btn-yellow fw-bold px-4 py-2">Browse Vehicles</a>
                     <a href="#" class="btn btn-outline-navy fw-bold px-4 py-2">Call Us</a>
                 </div>
-
                 <div class="d-flex flex-wrap gap-4 mt-5">
                     <div class="text-center">
                         <i class="bi bi-shield-lock fs-3 text-yellow"></i>
@@ -58,7 +57,7 @@
                         <p class="text-secondary">
                             Enjoy peace of mind with insurance options included in every rental. Drive with confidence wherever your journey takes you.
                         </p>
-                        <a href="#" class="btn btn-yellow fw-bold px-3">Read More</a>
+                        <a href="{{ route('about') }}" class="btn btn-yellow fw-bold px-3">Read More</a>
                     </div>
                 </div>
             </div>
@@ -71,7 +70,7 @@
                         <p class="text-secondary">
                             Whether you need a car for a day, a week, or even longer, our flexible rental terms cater to your specific needs. We adapt to your schedule, providing you with the freedom to explore without constraints.
                         </p>
-                        <a href="#" class="btn btn-yellow fw-bold px-3">Read More</a>
+                        <a href="{{ route('about') }}" class="btn btn-yellow fw-bold px-3">Read More</a>
                     </div>
                 </div>
             </div>
@@ -84,7 +83,7 @@
                         <p class="text-secondary">
                             Our user-friendly booking system allows you to reserve your vehicle in just a few clicks. With transparent pricing and no hidden fees, we ensure a smooth and straightforward experience from start to finish.
                         </p>
-                        <a href="#" class="btn btn-yellow fw-bold px-3">Read More</a>
+                        <a href="{{ route('about') }}" class="btn btn-yellow fw-bold px-3">Read More</a>
                     </div>
                 </div>
             </div>
@@ -176,7 +175,7 @@
 
             <div class="card-footer bg-transparent border-0">
               @if ($vehicle['available'])
-                <a href="{{ route('booking', ['vehicle' => urlencode($vehicle['name'])]) }}" class="btn btn-primary w-100 fw-bold">
+                <a href="{{ route('vehicles', ['vehicle' => urlencode($vehicle['name'])]) }}" class="btn btn-primary w-100 fw-bold">
                   Book Now
                 </a>
               @else

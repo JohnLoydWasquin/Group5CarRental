@@ -61,7 +61,7 @@
         <hr class="mt-5">
         <div class="text-center small text-muted">
             <p class="mb-1">© 2025 RideNow - AutoPiloto Car Rentals. All rights reserved.</p>
-            <p>Developed by: Guanzon, Tomoc, Perez, Eroles | BSIT-SM 3102 | Batangas State University</p>
+            <p>Developed by: Guanzon, Tomoc, Perez, Eroles | BSIT-SM 3102 | Batangas State University - Lipa Campus</p>
         </div>
     </div>
 </footer>
