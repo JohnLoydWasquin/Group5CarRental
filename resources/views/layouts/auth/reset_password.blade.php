@@ -47,20 +47,16 @@
     <div class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
         <div class="card card-custom">
 
-            <!-- Back Button -->
             <a href="javascript:history.back()" class="text-decoration-none text-primary mb-3 d-inline-flex align-items-center">
                 <i class="bi bi-chevron-left me-1"></i> Back
             </a>
 
-            <!-- Title -->
             <h3 class="fw-bold mb-1">Create New Password</h3>
             <p class="text-muted mb-4" style="font-size: 14px;">Set a strong password for your account</p>
 
-            <!-- Reset Password Form -->
             <form method="POST" action="{{ route('reset_password') }}">
                 @csrf
 
-                <!-- New Password -->
                 <div class="mb-3">
                     <label class="form-label">New Password</label>
                     <div class="password-wrapper">
@@ -69,7 +65,6 @@
                     </div>
                 </div>
 
-                <!-- Confirm Password -->
                 <div class="mb-4">
                     <label class="form-label">Confirm Password</label>
                     <div class="password-wrapper">

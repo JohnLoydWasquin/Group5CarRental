@@ -1,5 +1,6 @@
 <head>
     <title>AutoPiloto | Contact Us</title>
+    <link href="{{ asset('css/contact.css') }}" rel="stylesheet">
 </head>
 
 @extends('layouts.app')
@@ -22,32 +23,32 @@
         <div class="contact-container">
             <div class="contact-form">
                 <h2>Send us a Message</h2>
-                @if (session('success'))
-                    <div class="alert alert-success">
-                        {{ session('success') }}
-                    </div>
-                @endif
-                @if (session('error'))
-                    <div class="alert alert-danger">
-                        {{ session('error') }}
-                    </div>
-                @endif
-                <form action="{{ route('contact_send') }}" method="POST">
+                <div id="responseMessage"></div>
+                <form id="contactForm" action="{{ route('contact_send') }}" method="POST">
                     @csrf
                     <div class="form-row">
                         <div class="form-group">
                             <label>Full Name</label>
                             <input type="text" name="name" placeholder="Juan Dela Cruz">
+                            @error('name')
+                                <small class="text-danger">{{ $message }}</small>
+                            @enderror
                         </div>
                         <div class="form-group">
                             <label>Email Address</label>
                             <input type="email" name="email" placeholder="juan@example.com">
+                            @error('email')
+                                <small class="text-danger">{{ $message }}</small>
+                            @enderror
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label>Phone Number</label>
                         <input type="text" name="phone" placeholder="09XXXXXXXXX">
+                        @error('phone')
+                                <small class="text-danger">{{ $message }}</small>
+                        @enderror
                     </div>
 
                     <div class="form-group">
@@ -60,11 +61,17 @@
                             <option value="partnership">Partnership</option>
                             <option value="other">Other</option>
                         </select>
+                        @error('subject')
+                                <small class="text-danger">{{ $message }}</small>
+                        @enderror
                     </div>
 
                     <div class="form-group">
                         <label>Message</label>
                         <textarea rows="5" name="message" placeholder="Tell us how we can help..."></textarea>
+                        @error('message')
+                                <small class="text-danger">{{ $message }}</small>
+                        @enderror
                     </div>
 
                     <button type="submit">Send Message</button>
@@ -128,4 +135,35 @@
     </div>
   </div>
 </section>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#contactForm').on('submit', function(e) {
+        e.preventDefault();
+        var formData = $(this).serialize();
+
+        $.ajax({
+            type: 'POST',
+            url: $(this).attr('action'),
+            data: formData,
+            success: function(response) {
+                $('#responseMessage').html('<div class="alert alert-success">' + response.success + '</div>');
+                
+                $('#contactForm')[0].reset();
+            },
+            error: function(xhr) {
+                let errors = xhr.responseJSON.errors;
+                let errorHtml = '<div class="alert alert-danger"><ul>';
+                
+                $.each(errors, function(key, value) {
+                    errorHtml += '<li>' + value[0] + '</li>';
+                });
+                
+                errorHtml += '</ul></div>';
+                $('#responseMessage').html(errorHtml);
+            }
+        });
+    });
+});
+</script>
 @endsection

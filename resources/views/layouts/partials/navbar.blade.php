@@ -18,7 +18,7 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav mx-auto">
                 <li class="nav-item"><a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">Home</a></li>
-                <li class="nav-item"><a class="nav-link {{ request()->routeIs('vehicles' ? 'active' : '') }}" href="{{ route('vehicles') }}">Vehicles</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">Vehicles</a></li>
                 <li class="nav-item"><a class="nav-link {{ request()->routeIs('about') ? 'active' : '' }}" href="{{ route('about') }}">About</a></li>
                 <li class="nav-item"><a class="nav-link {{ request()->routeIs('contact') ? 'active' : ''}}" href="{{ route('contact') }}">Contact</a></li>
             </ul>
@@ -31,14 +31,14 @@
                         <a class="nav-link text-white-50" href="{{ route('login') }}">Login</a>
                     </li>
                     <li class="nav-item ms-2">
-                        <a href="#" class="btn btn-yellow fw-bold px-3">Rent Now</a>
+                        <a href="{{ route('vehicles') }}" class="btn btn-yellow fw-bold px-3">Rent Now</a>
                     </li>
                 @endguest
 
                 @auth
                     {{-- If the user already Login --}}
                     <li class="nav-item ms-2">
-                        <a href="#" class="btn btn-yellow fw-bold px-3">Rent Now</a>
+                        <a href="{{ route('vehicles') }}" class="btn btn-yellow fw-bold px-3">Rent Now</a>
                     </li>
 
                     {{-- Then if the user are already login the circle profile will appear --}}

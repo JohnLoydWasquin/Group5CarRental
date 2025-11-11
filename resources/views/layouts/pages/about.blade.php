@@ -1,5 +1,6 @@
 <head>
     <title>AutoPiloto | About Us</title>
+    <link href="{{ asset('css/about.css') }}" rel="stylesheet">
 </head>
 
 @extends('layouts.app')

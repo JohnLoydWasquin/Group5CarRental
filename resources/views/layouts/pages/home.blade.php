@@ -11,8 +11,8 @@
                     Experience seamless car rental services across the beautiful landscapes of Luzon, tailored to meet your travel needs with utmost convenience.
                 </p>
                 <div class="d-flex gap-3" data-aos="fade-up">
-                    <a href="#" class="btn btn-yellow fw-bold px-4 py-2">Browse Vehicles</a>
-                    <a href="#" class="btn btn-outline-navy fw-bold px-4 py-2">Call Us</a>
+                    <a href="{{ route('vehicles') }}" class="btn btn-yellow fw-bold px-4 py-2">Browse Vehicles</a>
+                    <a href="{{ route('contact') }}" class="btn btn-outline-navy fw-bold px-4 py-2">Call Us</a>
                 </div>
                 <div class="d-flex flex-wrap gap-4 mt-5">
                     <div class="text-center">

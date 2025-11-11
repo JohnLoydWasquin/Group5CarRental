@@ -1,0 +1,50 @@
+body {
+      background: url('{{ asset("images/bg.jpg") }}') center center / cover no-repeat;
+      min-height: 100vh;
+    }
+    .overlay {
+      background: rgba(0,0,0,0.45);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    .card-register {
+      width: 100%;
+      max-width: 480px;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+      background: #ffffff;
+    }
+    .form-control:focus {
+      box-shadow: none;
+      border-color: #0d6efd;
+    }
+    .brand-title {
+      font-weight: 700;
+      letter-spacing: .3px;
+    }
+    @media (max-width: 540px) {
+      .overlay { padding: 1rem; }
+      .card-register { padding: 1rem; }
+    }
+    .password-hint {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px 15px;
+  margin-top: 5px;
+  width: 100%;
+  display: none;
+  animation: fadeIn 0.2s ease-in-out;
+  z-index: 10;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}

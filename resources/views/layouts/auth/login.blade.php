@@ -57,7 +57,7 @@
           {{-- Email --}}
           <div class="mb-3">
             <label class="form-label">Email</label>
-            <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" placeholder="name@example.com" required>
+            <input type="email" name="email" value="{{ old('email', $rememberedEmail) }}" class="form-control @error('email') is-invalid @enderror" placeholder="name@example.com" required>
             @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
           </div>
 
@@ -65,7 +65,7 @@
           <div class="mb-3">
             <label class="form-label">Password</label>
             <div class="input-group">
-                <input type="password" id="password" name="password" class="form-control @error('password') is-invalid @enderror" placeholder="Enter your password" required>
+                <input type="password" id="password" name="password" value="{{ old('password', $rememberedPassword) }}" class="form-control @error('password') is-invalid @enderror" placeholder="Enter your password" required>
                 <span class="input-group-text" onclick="togglePassword('password', this)" style="cursor: pointer;">
                     <i class="fa-solid fa-eye"></i>
                 </span>
@@ -76,7 +76,7 @@
           {{-- Remember Me & Forgot Password --}}
           <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-              <input type="checkbox" name="remember"> <small>Remember Me</small>
+              <input type="checkbox" name="remember" {{ request()->cookie('remember_email') ? 'checked' : '' }}> <small>Remember Me</small>
             </div>
             <a href="{{ route('forgot_phone') }}" class="text-decoration-none small">Forgot Password?</a>
           </div>
