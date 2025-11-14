@@ -1,9 +1,9 @@
-@extends('layouts.authorities.admin')
+@extends('layouts.orgStaff.staff')
 
 @section('content')
 <div class="p-8 bg-gray-50 min-h-screen">
     <div class="mb-8 flex items-center gap-4">
-        <a href="{{ route('admin.customers') }}" class="p-2 hover:bg-gray-200 rounded-lg transition">
+        <a href="{{ route('staff.customers') }}" class="p-2 hover:bg-gray-200 rounded-lg transition">
             <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
             </svg>

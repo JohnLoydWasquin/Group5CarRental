@@ -15,12 +15,10 @@ class AdminController extends Controller
         $availableVehicles = Vehicle::where('availability', 1)->count();
         $activeBookings = Booking::whereIn('booking_status', ['Pending Approval', 'Payment Submitted', 'Confirmed', 'Ongoing'])->count();
 
-        // Only count bookings with actual revenue
         $monthlyRevenue = Booking::whereMonth('created_at', now()->month)
             ->whereIn('booking_status', ['Confirmed', 'Ongoing', 'Completed'])
             ->sum('total_amount');
 
-        // Revenue trends per month
         $revenueTrends = Booking::select(
             DB::raw('MONTH(created_at) as month'),
             DB::raw('SUM(total_amount) as total')
@@ -37,7 +35,6 @@ class AdminController extends Controller
             ];
         });
 
-        // Booking status breakdown
         $bookingStatus = Booking::select('booking_status', DB::raw('COUNT(*) as count'))
             ->groupBy('booking_status')
             ->get();

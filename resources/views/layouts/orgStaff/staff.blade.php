@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | AutoPilot Car Rentals</title>
+    <title>Staff Dashboard | AutoPilot Car Rentals</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&display=swap">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13,6 +13,7 @@
 <body class="bg-gray-100 text-gray-800">
     <div class="flex min-h-screen">
 
+        <!-- Sidebar -->
         <aside class="w-64 bg-[#020617] text-white flex flex-col fixed h-screen">
             <div class="flex items-center gap-3 p-6 border-b border-gray-700">
                 <img src="{{ asset('images/AutopilotoLogo.png') }}" alt="Logo" class="w-10 h-10 rounded-md bg-blue-600 p-1">
@@ -23,29 +24,29 @@
             </div>
 
             <nav class="flex-1 p-4 space-y-2 text-gray-200">
-                <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-gray-800">
+                <a href="{{ route('staff.dashboard') }}" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-gray-800">
                     <i data-lucide="home" class="w-5 h-5"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="{{ route('admin.customers') }}" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-gray-800">
+
+                <a href="{{ route('staff.customers') }}" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-gray-800">
                     <i data-lucide="users" class="w-5 h-5"></i>
                     <span>Customers</span>
                 </a>
-                <a href="{{ route('admin.vehicles.index') }}" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-gray-800">
+
+                <a href="{{ route('staff.vehicles.index') }}" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-gray-800">
                     <i data-lucide="car" class="w-5 h-5"></i>
                     <span>Car Inventory</span>
                 </a>
-                <a href="{{ route('admin.bookings') }}" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-gray-800">
-                    <i data-lucide="calendar" class="w-5 h-5"></i>
-                    <span>Bookings</span>
-                </a>
-                <a href="{{ route('admin.staff.index') }}" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-gray-800">
-                    <i data-lucide="user-cog" class="w-5 h-5"></i>
-                    <span>Staff Management</span>
-                </a>
+
                 <a href="#" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-gray-800">
                     <i data-lucide="message-circle" class="w-5 h-5"></i>
                     <span>Chat</span>
+                </a>
+
+                <a href="#" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-gray-800">
+                    <i data-lucide="file-bar-chart" class="w-5 h-5"></i>
+                    <span>Generate Report</span>
                 </a>
             </nav>
 
@@ -59,6 +60,7 @@
             </div>
         </aside>
 
+        <!-- Main Content -->
         <div class="flex-1 flex flex-col ml-64">
             <header class="flex justify-between items-center bg-white p-4 shadow-sm">
                 <h2 class="text-2xl font-bold text-gray-800">Dashboard</h2>
@@ -76,7 +78,7 @@
 
                     <div class="flex items-center gap-2">
                         <div class="w-9 h-9 flex items-center justify-center bg-blue-600 text-white font-semibold rounded-full">
-                            AD
+                            ST
                         </div>
                         <span class="text-gray-800 font-medium">{{ auth()->user()->name }}</span>
                     </div>

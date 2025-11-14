@@ -9,11 +9,14 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\StaffController;
+use App\Http\Controllers\AdminStaffController;
 use App\Http\Controllers\AdminCustomerController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\AdminVehicleController;
 use App\Http\Controllers\AdminBookingController;
+use App\Http\Controllers\StaffController;
+use App\Http\Controllers\StaffCustomerController;
+use App\Http\Controllers\StaffVehicleController;
 
 // Navigator
 Route::get('/', function () {return view('layouts.pages.home');})->name('home');
@@ -54,11 +57,10 @@ Route::middleware(['auth'])->group(function () {
 
 //Admin routing
 Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/admin/dashboard', [App\Http\Controllers\AdminController::class, 'index'])->name('admin.dashboard');
+    Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
 });
-Route::middleware(['auth', 'role:staff'])->group(function () {
-    Route::get('/staff/dashboard', [App\Http\Controllers\StaffController::class, 'index']);
-});
+
+//Admin Customers data
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/customers', [AdminCustomerController::class, 'index'])->name('admin.customers');
     Route::get('/admin/customers/search', [AdminCustomerController::class, 'search'])->name('admin.customers.search');
@@ -86,7 +88,23 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     ->name('admin.bookings.destroy');
 });
 
+//Admin staff management
+Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/staff', [AdminStaffController::class, 'index'])->name('admin.staff.index');
+    Route::get('/staff/create', [AdminStaffController::class, 'create'])->name('admin.staff.create');
+    Route::post('/staff', [AdminStaffController::class, 'store'])->name('admin.staff.store');
+    Route::put('/staff/{id}', [AdminStaffController::class, 'update'])->name('admin.staff.update');
+    Route::delete('/staff/{id}', [AdminStaffController::class, 'destroy'])->name('admin.staff.destroy');
+});
 
+//Staff routes
+Route::middleware(['auth', 'role:staff'])->group(function () {
+    Route::get('/staff/dashboard', [StaffController::class, 'index'])->name('staff.dashboard');
+    Route::get('/staff/customers', [StaffCustomerController::class, 'index'])->name('staff.customers');
+    Route::get('/staff/customers/search', [StaffCustomerController::class, 'search'])->name('staff.customers.search');
+    Route::get('/staff/customers/{customer}', [StaffCustomerController::class, 'show'])->name('staff.customers.show');
+    Route::get('/vehicles',[StaffVehicleController::class, 'index'])->name('staff.vehicles.index');
+});
 
 
 
