@@ -67,7 +67,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/customers/{customer}', [AdminCustomerController::class, 'show'])->name('customers.show');
     Route::delete('/admin/customers/{id}', [AdminCustomerController::class, 'destroy'])->name('admin.customers.destroy');
 });
-Route::get('/chat/{customer}', [ChatController::class, 'show'])->name('chat.show');
+
 // Admin Car Inventory Routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/vehicles', [AdminVehicleController::class, 'index'])->name('admin.vehicles.index');
@@ -103,8 +103,13 @@ Route::middleware(['auth', 'role:staff'])->group(function () {
     Route::get('/staff/customers', [StaffCustomerController::class, 'index'])->name('staff.customers');
     Route::get('/staff/customers/search', [StaffCustomerController::class, 'search'])->name('staff.customers.search');
     Route::get('/staff/customers/{customer}', [StaffCustomerController::class, 'show'])->name('staff.customers.show');
-    Route::get('/vehicles',[StaffVehicleController::class, 'index'])->name('staff.vehicles.index');
+    Route::get('/staff/vehicles',[StaffVehicleController::class, 'index'])->name('staff.vehicles.index');
 });
 
+//Staff/Admin Chatting system
+Route::middleware(['auth'])->group(function () {
+    Route::get('/chat/{userId}', [ChatController::class, 'index'])->name('chat.index');
+    Route::post('/chat/send', [ChatController::class, 'send'])->name('chat.send');
+});
 
 

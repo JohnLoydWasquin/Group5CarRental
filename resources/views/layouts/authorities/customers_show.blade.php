@@ -165,7 +165,7 @@
                 <h3 class="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
                 <div class="space-y-3">
                     @if($customer->id)
-                    <a href="{{ route('chat.show', $customer) }}" class="block w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-center font-medium">
+                    <a href="#" class="block w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-center font-medium">
                         Send Message
                     </a>
                     @endif
