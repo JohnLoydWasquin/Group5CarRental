@@ -110,6 +110,8 @@ Route::middleware(['auth', 'role:staff'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/chat/{userId}', [ChatController::class, 'index'])->name('chat.index');
     Route::post('/chat/send', [ChatController::class, 'send'])->name('chat.send');
+    Route::post('/chat/send-audio', [ChatController::class, 'sendAudio'])->name('chat.send.audio');
+    Route::post('/chat/send-file', [ChatController::class, 'sendFile'])->name('chat.send.file');
 });
 
 

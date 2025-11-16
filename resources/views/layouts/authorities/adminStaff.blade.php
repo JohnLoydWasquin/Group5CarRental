@@ -1,14 +1,28 @@
+<head>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+    .fade { transition: opacity 0.8s ease-in-out; }
+    .password-hint {
+      display: none;
+      background: #f9f9f9;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-top: 0.5rem;
+      border: 1px solid #ddd;
+    }
+  </style>
+</head>
+
 @extends('layouts.authorities.admin')
 
 @section('content')
 <div class="p-6 space-y-8">
 
-    <!-- Page Flow / Breadcrumb -->
     <nav class="text-sm text-gray-500 mb-4">
         <h1 class="text-2xl font-bold text-gray-800">Create New Staff Account</h1>
     </nav>
 
-    <!-- Success / Error Messages -->
     @if(session('success'))
         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
             {{ session('success') }}
@@ -57,17 +71,37 @@
                         class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input type="password" name="password" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
-                </div>
+                <div class="relative">
+                    <label class="block text-gray-700 mb-1 font-semibold">Password</label>
+                    <input type="password" id="password" name="password" required
+                        class="w-full border-gray-300 rounded-lg p-3 border focus:ring-green-500 focus:border-green-500 pr-10"
+                        onfocus="showPasswordHint()" onblur="hidePasswordHint()" oninput="validatePassword(this.value)">
+                    <button type="button" onclick="togglePassword('password', this)"
+                        class="absolute right-3 top-12 text-gray-500 hover:text-gray-700">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                    @error('password') <p class="text-red-500 text-sm">{{ $message }}</p> @enderror
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-                    <input type="password" name="password_confirmation" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
-                </div>
+                    <div id="passwordHint" class="password-hint shadow">
+                        <p class="mb-2 font-semibold">Password must include:</p>
+                        <ul class="text-sm space-y-1">
+                        <li id="lenRule"><i class="fa-solid fa-xmark text-red-500 mr-2"></i>8-20 <strong>characters</strong></li>
+                        <li id="upperRule"><i class="fa-solid fa-xmark text-red-500 mr-2"></i>At least one <strong>capital letter</strong></li>
+                        <li id="numRule"><i class="fa-solid fa-xmark text-red-500 mr-2"></i>At least one <strong>number</strong></li>
+                        <li id="spaceRule"><i class="fa-solid fa-xmark text-red-500 mr-2"></i><strong>No spaces</strong></li>
+                        </ul>
+                    </div>
+                    </div>
+
+                    <div class="relative">
+                    <label class="block text-gray-700 mb-1 font-semibold">Confirm Password</label>
+                    <input type="password" id="password_confirmation" name="password_confirmation" required
+                        class="w-full border-gray-300 rounded-lg p-3 border focus:ring-green-500 focus:border-green-500 pr-10">
+                    <button type="button" onclick="togglePassword('password_confirmation', this)"
+                        class="absolute right-3 top-12 text-gray-500 hover:text-gray-700">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                    </div>
 
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
@@ -85,7 +119,6 @@
         </form>
     </div>
 
-    <!-- Search Staff/Admin -->
     <div class="bg-white shadow-lg rounded-2xl p-6 mt-8">
         <h2 class="text-lg font-semibold text-gray-800 mb-4">Search Staff/Admin</h2>
         <form id="searchForm" action="{{ route('admin.staff.index') }}#staffList" method="GET" class="flex flex-col md:flex-row md:items-center gap-4">
@@ -100,7 +133,6 @@
         </form>
     </div>
 
-    <!-- Staff/Admin List -->
     <div id="staffList" class="bg-white shadow-lg rounded-2xl p-6 mt-8">
         <h2 class="text-lg font-semibold text-gray-800 mb-4">Staff & Admin List</h2>
 
@@ -155,4 +187,5 @@ document.getElementById('searchForm').addEventListener('submit', function() {
     }, 100);
 });
 </script>
+<script src="{{ asset('js/auth.js') }}"></script>
 @endsection
