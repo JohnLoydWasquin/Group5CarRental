@@ -15,17 +15,21 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Main Content -->
         <div class="lg:col-span-2 space-y-6">
-            
-            <!-- Customer Info Card -->
+
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
                     <div class="flex items-center gap-4">
-                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                            <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
-                            </svg>
+                        <div class="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center">
+                            @if($customer->profile_image)
+                                <img src="{{ asset('storage/' . $customer->profile_image) }}" alt="{{ $customer->name }}" class="w-full h-full object-cover">
+                            @else
+                                @php
+                                    $nameParts = explode(' ', $customer->name);
+                                    $initials = strtoupper(substr($nameParts[0], 0, 1) . (count($nameParts) > 1 ? substr(end($nameParts), 0, 1) : ''));
+                                @endphp
+                                <div class="w-full h-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">{{ $initials }}</div>
+                            @endif
                         </div>
                         <div class="flex-1">
                             <h2 class="text-2xl font-bold text-white">{{ $customer->name ?? 'N/A' }}</h2>
@@ -37,11 +41,9 @@
                     </div>
                 </div>
 
-                <!-- Customer Details Grid -->
                 <div class="p-8">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        
-                        <!-- Email -->
+
                         <div class="flex items-start gap-4">
                             <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
                                 <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,7 +59,6 @@
                             </div>
                         </div>
 
-                        <!-- Phone -->
                         <div class="flex items-start gap-4">
                             <div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
                                 <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,7 +74,6 @@
                             </div>
                         </div>
 
-                        <!-- Join Date -->
                         <div class="flex items-start gap-4">
                             <div class="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center flex-shrink-0">
                                 <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,7 +87,6 @@
                             </div>
                         </div>
 
-                        <!-- Bookings Count -->
                         <div class="flex items-start gap-4">
                             <div class="w-12 h-12 bg-orange-50 rounded-lg flex items-center justify-center flex-shrink-0">
                                 <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,7 +103,6 @@
                 </div>
             </div>
 
-            <!-- Booking History -->
             @if($customer->bookings?->count() > 0)
             <div class="bg-white rounded-xl shadow-sm border border-gray-100">
                 <div class="px-8 py-6 border-b border-gray-100">
@@ -157,11 +155,9 @@
             @endif
         </div>
 
-        <!-- Sidebar -->
         <div class="space-y-6">
-            
-            <!-- Quick Actions -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+
+            <!-- <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <h3 class="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
                 <div class="space-y-3">
                     @if($customer->id)
@@ -176,7 +172,7 @@
                         Deactivate Account
                     </button>
                 </div>
-            </div>
+            </div> -->
 
             <!-- Account Stats -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">

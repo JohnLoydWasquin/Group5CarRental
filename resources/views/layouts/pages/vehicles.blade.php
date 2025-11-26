@@ -6,6 +6,9 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+/** @var \Illuminate\Pagination\LengthAwarePaginator $vehicles */
+@endphp
 <style>
   body {
     background-color: #dadee1ff;
@@ -115,13 +118,91 @@
   <div class="text-center py-5 mt-5">
     <h1 class="fw-bold">Our Fleet</h1>
     <p class="text-muted">Choose from our premium selection of vehicles</p>
+
+  <form method="GET" action="{{ route('vehicles') }}" class="mb-4">
+    <div class="row g-3 align-items-end">
+
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Search</label>
+        <input
+          type="text"
+          name="search"
+          class="form-control"
+          placeholder="Search brand or model..."
+          value="{{ request('search') }}"
+        >
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Brand</label>
+        <select name="brand" class="form-select">
+          <option value="">All brands</option>
+          @foreach($brands as $brand)
+            <option value="{{ $brand }}" {{ request('brand') == $brand ? 'selected' : '' }}>
+              {{ $brand }}
+            </option>
+          @endforeach
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Price range (₱ / day)</label>
+        <div class="d-flex gap-2">
+          <input
+            type="number"
+            name="price_min"
+            class="form-control"
+            placeholder="Min"
+            value="{{ request('price_min') }}"
+            min="0"
+          >
+          <input
+            type="number"
+            name="price_max"
+            class="form-control"
+            placeholder="Max"
+            value="{{ request('price_max') }}"
+            min="0"
+          >
+        </div>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label fw-semibold">Sort by</label>
+        <select name="sort" class="form-select">
+          <option value="">Default</option>
+          <option value="price_asc"  {{ request('sort') == 'price_asc'  ? 'selected' : '' }}>Price: Low to High</option>
+          <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>Price: High to Low</option>
+        </select>
+      </div>
+
+      <div class="col-12 col-md-12 mt-2 d-flex gap-2 justify-content-end">
+        <button type="submit" class="btn btn-primary">
+          Apply
+        </button>
+        <a href="{{ route('vehicles') }}" class="btn btn-outline-secondary">
+          Reset
+        </a>
+      </div>
+
+    </div>
+  </form>
   </div>
 
   <div class="row">
     @foreach ($vehicles as $vehicle)
     <div class="col-md-4 mb-4">
       <div class="card shadow-sm border-0">
-        <img src="{{ asset('images/' . $vehicle->Image) }}" class="card-img-top" alt="{{ $vehicle->Model }}">
+       <img 
+              src="{{ $vehicle->Image 
+                  ? (file_exists(public_path('images/' . $vehicle->Image)) 
+                      ? asset('images/' . $vehicle->Image)
+                      : asset('storage/' . $vehicle->Image))
+                  : asset('images/default-car.png') }}"
+              class="card-img-top" 
+              alt="{{ $vehicle->Model }}"
+          >
+
         <div class="card-body">
           <h5 class="card-title fw-bold">{{ $vehicle->Brand }} {{ $vehicle->Model }}</h5>
 
@@ -137,25 +218,67 @@
           </p>
 
           <div class="d-flex justify-content-between">
-            @if ($vehicle->Availability == 1)
-                <button class="btn btn-book w-50 me-2" data-bs-toggle="modal"
-                  data-bs-target="#bookModal{{ $vehicle->VehicleID }}">
-                  Book Now
-                </button>
+              @if ($vehicle->Availability == 1)
 
-                <button class="btn btn-reserve w-50" data-bs-toggle="modal"
-                  data-bs-target="#reserveModal{{ $vehicle->VehicleID }}">
-                  Reserve
-                </button>
-            @else
-                <button class="btn btn-secondary w-50 me-2" disabled title="This vehicle is currently booked.">
-                  Book Now
-                </button>
+                  @auth
+                      @if (auth()->user()->kyc_status === 'Approved')
+                          {{-- ✅ Verified user: normal modals --}}
+                          <button
+                              class="btn btn-book w-50 me-2"
+                              data-bs-toggle="modal"
+                              data-bs-target="#bookModal{{ $vehicle->VehicleID }}">
+                              Book Now
+                          </button>
 
-                <button class="btn btn-secondary w-50" disabled title="This vehicle is currently booked.">
-                  Reserve
-                </button>
-            @endif
+                          <button
+                              class="btn btn-reserve w-50"
+                              data-bs-toggle="modal"
+                              data-bs-target="#reserveModal{{ $vehicle->VehicleID }}">
+                              Reserve
+                          </button>
+                      @else
+                          {{-- ⚠️ Logged-in but NOT KYC verified --}}
+                          <button
+                              type="button"
+                              class="btn btn-book w-50 me-2 btn-require-kyc"
+                              data-redirect="{{ route('kyc.form') }}">
+                              Book Now
+                          </button>
+
+                          <button
+                              type="button"
+                              class="btn btn-reserve w-50 btn-require-kyc"
+                              data-redirect="{{ route('kyc.form') }}">
+                              Reserve
+                          </button>
+                      @endif
+                  @else
+                      {{-- 🧍 Guest (not logged in) --}}
+                      <button
+                          type="button"
+                          class="btn btn-book w-50 me-2 btn-require-login"
+                          data-redirect="{{ route('login') }}">
+                          Book Now
+                      </button>
+
+                      <button
+                          type="button"
+                          class="btn btn-reserve w-50 btn-require-login"
+                          data-redirect="{{ route('login') }}">
+                          Reserve
+                      </button>
+                  @endauth
+
+              @else
+                  {{-- Vehicle unavailable --}}
+                  <button class="btn btn-secondary w-50 me-2" disabled title="This vehicle is currently booked.">
+                      Book Now
+                  </button>
+
+                  <button class="btn btn-secondary w-50" disabled title="This vehicle is currently booked.">
+                      Reserve
+                  </button>
+              @endif
           </div>
         </div>
       </div>
@@ -412,38 +535,151 @@
   </div>
 </div>
 
-    {{-- Reserve Modal --}}
+        {{-- Reserve Modal --}}
     <div class="modal fade" id="reserveModal{{ $vehicle->VehicleID }}" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable custom-modal">
         <div class="modal-content">
+
           <div class="modal-header">
             <h5 class="modal-title fw-bold">Reserve Vehicle</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
 
           <div class="modal-body">
-            <p class="fw-bold">{{ $vehicle->Brand }} {{ $vehicle->Model }}</p>
-            <p class="text-muted mb-4">Reserve this car now and pay later.</p>
+            <p class="fw-bold mb-1">{{ $vehicle->Brand }} {{ $vehicle->Model }}</p>
+            <p class="text-muted mb-4">Reserve now and pay later.</p>
 
-            <form>
+            <form class="reserveForm" data-vehicle-id="{{ $vehicle->VehicleID }}"
+                  action="{{ route('booking.reserve') }}" method="POST">
+              @csrf
+              <input type="hidden" name="VehicleID" value="{{ $vehicle->VehicleID }}">
+
+              {{-- ⭐ NEW: hidden dropoff_location to be filled by JS --}}
+              <input type="hidden" name="dropoff_location" id="dropoffLocationHidden{{ $vehicle->VehicleID }}">
+
+              {{-- SAME LOCATION UI AS BOOKING --}}
               <div class="mb-3">
-                <label class="form-label">Full Name</label>
-                <input type="text" class="form-control" placeholder="Enter your name">
+                <select class="form-select" id="locationTypeReserve{{ $vehicle->VehicleID }}">
+                  <option value="same">Same Drop-off Location</option>
+                  <option value="different">Different Drop-off Location</option>
+                </select>
+
+                <div class="border p-3 rounded mt-2">
+                  <div class="row g-2">
+                    <div class="col-12" id="pickupOnlyReserve{{ $vehicle->VehicleID }}">
+                      <label class="fw-semibold text-secondary mb-2">Pick-up Location</label>
+                      <input type="text" class="form-control"
+                             id="pickupLocationReserve{{ $vehicle->VehicleID }}"
+                             name="pickup_location">
+                    </div>
+                    <div class="col-md-6" id="pickupDifferentReserve{{ $vehicle->VehicleID }}" style="display:none;">
+                      <label class="fw-semibold text-secondary mb-2">Pick-up Location</label>
+                      <input type="text" class="form-control"
+                             id="pickupLocationDiffReserve{{ $vehicle->VehicleID }}">
+                    </div>
+                    <div class="col-md-6" id="dropoffDifferentReserve{{ $vehicle->VehicleID }}" style="display:none;">
+                      <label class="fw-semibold text-secondary mb-2">Drop-off Location</label>
+                      <input type="text" class="form-control"
+                             id="dropoffLocationDiffReserve{{ $vehicle->VehicleID }}">
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="mb-3">
-                <label class="form-label">Contact Number</label>
-                <input type="text" class="form-control" placeholder="09XXXXXXXXX">
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Pickup Date</label>
+                  <input type="date"
+                         class="form-control reserve-pickup-date"
+                         id="pickupDate{{ $vehicle->VehicleID }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Pickup Time</label>
+                  <input type="time"
+                         class="form-control reserve-pickup-time"
+                         id="pickupTime{{ $vehicle->VehicleID }}">
+                </div>
               </div>
-              <div class="mb-3">
-                <label class="form-label">Pickup Date</label>
-                <input type="date" class="form-control">
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Return Date</label>
+                  <input type="date"
+                         class="form-control reserve-return-date"
+                         id="returnDate{{ $vehicle->VehicleID }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Return Time</label>
+                  <input type="time"
+                         class="form-control reserve-return-time"
+                         id="returnTime{{ $vehicle->VehicleID }}">
+                </div>
               </div>
+
+              <div class="addons mb-3">
+                <label class="form-label fw-bold">Optional Add-ons</label>
+                <div class="form-check">
+                  <input class="form-check-input addon reserve-addon"
+                         type="checkbox"
+                         id="driver{{ $vehicle->VehicleID }}"
+                         value="driver">
+                  <label class="form-check-label">Driver Service (+₱500/day)</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input addon reserve-addon"
+                         type="checkbox"
+                         id="childSeat{{ $vehicle->VehicleID }}"
+                         value="childSeat">
+                  <label class="form-check-label">Child Seat (+₱200/day)</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input addon reserve-addon"
+                         type="checkbox"
+                         id="insurance{{ $vehicle->VehicleID }}"
+                         value="insurance">
+                  <label class="form-check-label">Insurance (+₱300)</label>
+                </div>
+              </div>
+
+              <div id="addonsContainerReserve{{ $vehicle->VehicleID }}"></div>
+
+              <div class="total-section mt-4">
+                <p>Security Deposit:
+                  <span class="float-end text-primary">₱3,000</span>
+                </p>
+                <p>Duration Cost:
+                  <span class="float-end text-primary reserve-duration"
+                        id="durationCost{{ $vehicle->VehicleID }}">₱0</span>
+                </p>
+                <p>Add-ons:
+                  <span class="float-end text-primary reserve-addons"
+                        id="addonsTotal{{ $vehicle->VehicleID }}">₱0</span>
+                </p>
+                <p>Subtotal:
+                  <span class="float-end text-primary reserve-subtotal"
+                        id="subtotal{{ $vehicle->VehicleID }}">₱0</span>
+                </p>
+                <hr>
+                <p class="fw-bold">Total:
+                  <span class="float-end text-danger reserve-grandtotal"
+                        id="grandTotal{{ $vehicle->VehicleID }}">₱3,000</span>
+                </p>
+              </div>
+
+              <input type="hidden" name="pickup_datetime" id="pickupDateTimeReserve{{ $vehicle->VehicleID }}">
+              <input type="hidden" name="return_datetime" id="returnDateTimeReserve{{ $vehicle->VehicleID }}">
+              <input type="hidden" name="addons[]" id="addonsReserve{{ $vehicle->VehicleID }}">
+
+              <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-primary btn-confirm-reserve"
+                        data-vehicle-id="{{ $vehicle->VehicleID }}"
+                        type="button">
+                  Confirm Reservation
+                </button>
+              </div>
+
             </form>
-          </div>
-
-          <div class="modal-footer">
-            <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button class="btn btn-reserve">Confirm Reservation</button>
           </div>
         </div>
       </div>
@@ -451,9 +687,23 @@
 
     @endforeach
   </div>
-</div>  
+  <div class="d-flex justify-content-center mt-4 mb-5">
+    {{ $vehicles->links('pagination::bootstrap-5') }}
+</div>
+</div>
+@if ($errors->has('reserve'))
+<script>
+    Swal.fire({
+        icon: 'warning',
+        title: 'Warning',
+        text: "{{ $errors->first('reserve') }}",
+        confirmButtonColor: '#d33',
+    });
+</script>
+@endif
 
-<div id="vehicleData" data-vehicles='@json($vehicles)'></div>
+
+<div id="vehicleData" data-vehicles='@json($vehicles->items())'></div>
 
 <script src="{{ asset('js/vehicles.js') }}"></script>
 @endsection

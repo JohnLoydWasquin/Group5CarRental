@@ -18,19 +18,20 @@ searchInput.addEventListener('keyup', function() {
     const editForm = document.getElementById('editForm');
 
     document.querySelectorAll('.editBtn').forEach(button => {
-        button.addEventListener('click', () => {
-            const id = button.dataset.id;
-            editForm.action = `/admin/vehicles/${id}`;
-            document.getElementById('PlateNo').value = button.dataset.plate;
-            document.getElementById('Brand').value = button.dataset.brand;
-            document.getElementById('Model').value = button.dataset.model;
-            document.getElementById('DailyPrice').value = button.dataset.price;
-            document.getElementById('Availability').value = button.dataset.availability;
-            document.getElementById('Condition').value = button.dataset.condition;
+    button.addEventListener('click', () => {
+        const id = button.dataset.id;
+        editForm.action = `/admin/vehicles/${id}`;
 
-            editModal.classList.remove('hidden');
-        });
+        document.getElementById('editPlateNo').value = button.dataset.plate;
+        document.getElementById('editBrand').value = button.dataset.brand;
+        document.getElementById('editModel').value = button.dataset.model;
+        document.getElementById('editDailyPrice').value = button.dataset.price;
+        document.getElementById('editAvailability').value = button.dataset.availability;
+        document.getElementById('editCondition').value = button.dataset.condition;
+
+        editModal.classList.remove('hidden');
     });
+});
 
     closeModal.addEventListener('click', () => editModal.classList.add('hidden'));
 
@@ -61,4 +62,9 @@ searchInput.addEventListener('keyup', function() {
             reader.readAsDataURL(file);
         }
     });
+
+editBtn.addEventListener('click', function() {
+    document.getElementById('editPassengers').value = this.dataset.passengers ?? 4;
+});
+
 

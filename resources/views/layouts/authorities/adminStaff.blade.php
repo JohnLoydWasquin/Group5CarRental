@@ -155,7 +155,7 @@
                             <td class="px-6 py-3">{{ $member->phone }}</td>
                             <td class="px-6 py-3 capitalize">{{ $member->role }}</td>
                             <td class="px-6 py-3 flex justify-center gap-3">
-                                <a href="{{ route('admin.staff.update', $member->id) }}" class="px-3 py-1.5 text-xs bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200">Edit</a>
+                                <a href="#" class="px-3 py-1.5 text-xs bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200">Edit</a>
                                 <form action="{{ route('admin.staff.destroy', $member->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this staff/admin?')">
                                     @csrf
                                     @method('DELETE')

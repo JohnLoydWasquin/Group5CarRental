@@ -13,15 +13,24 @@ class Vehicle extends Model
     protected $table = 'vehicles';
 
     protected $fillable = [
-        'VehicleName',
-        'Type',
-        'PricePerDay',
-        'Image',
-        'PlateNo',      
-        'Brand',
-        'Model',
-        'DailyPrice', 
-        'Availability',
-        'Condition',
-    ];
+    'PlateNo',
+    'Brand',
+    'Model',
+    'DailyPrice',
+    'Condition',
+    'Availability',
+    'Passengers',
+    'FuelType',
+    'Transmission',
+    'Image',
+    'EmpID'
+];
+
+public function bookings()
+{
+    return $this->hasMany(\App\Models\Booking::class, 'VehicleID', 'VehicleID');
+}
+
+
+
 }

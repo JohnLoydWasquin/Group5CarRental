@@ -31,6 +31,10 @@
                     <i data-lucide="users" class="w-5 h-5"></i>
                     <span>Customers</span>
                 </a>
+                <a href="{{ route('admin.kyc.index') }}" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-gray-800">
+                    <i data-lucide="id-card" class="w-5 h-5"></i>
+                    <span>Account Verifications</span>
+                </a>
                 <a href="{{ route('admin.vehicles.index') }}" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-gray-800">
                     <i data-lucide="car" class="w-5 h-5"></i>
                     <span>Car Inventory</span>
@@ -43,9 +47,26 @@
                     <i data-lucide="user-cog" class="w-5 h-5"></i>
                     <span>Staff Management</span>
                 </a>
-                <a href="{{ route('chat.index', ['userId' => auth()->user()->id]) }}" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-gray-800">
-                    <i data-lucide="message-circle" class="w-5 h-5"></i>
-                    <span>Chat</span>
+                <a href="{{ route('chat.index', ['userId' => auth()->user()->id]) }}"
+                class="flex items-center justify-between px-4 py-2 rounded hover:bg-gray-800">
+
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="message-circle" class="w-5 h-5"></i>
+                        <span>Chat</span>
+                    </div>
+
+                    <span
+                        id="chatUnreadBadge"
+                        data-count="{{ $chatUnreadCount ?? 0 }}"
+                        class="@if(($chatUnreadCount ?? 0) == 0) hidden @else flex @endif
+                            items-center justify-center w-5 h-5 text-xs font-bold
+                            bg-red-500 text-white rounded-full">
+                        {{ ($chatUnreadCount ?? 0) > 9 ? '9+' : ($chatUnreadCount ?? 0) }}
+                    </span>
+                </a>
+                <a href="{{ route('reports.index') }}" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-gray-800">
+                    <i data-lucide="file-bar-chart" class="w-5 h-5"></i>
+                    <span>Generate Report</span>
                 </a>
             </nav>
 

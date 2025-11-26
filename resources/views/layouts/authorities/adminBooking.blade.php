@@ -12,6 +12,13 @@
         </div>
     @endif
 
+    @if(session('error'))
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mt-2">
+        {{ session('error') }}
+    </div>
+    @endif
+
+
     <!-- Card Container -->
     <div class="bg-white shadow-lg rounded-2xl p-6">
         <div class="overflow-x-auto">
@@ -25,6 +32,8 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">Pickup Location</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">Drop-off Location</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">Total Amount</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">Payment Type</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">Paid Amount</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">Proof of Payment</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">Payment Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">Booking Status</th>
@@ -34,7 +43,7 @@
 
                 <tbody class="bg-white divide-y divide-gray-200">
                     @php
-                        $pendingStatuses = ['Pending Approval', 'Payment Submitted'];
+                        $pendingStatuses = ['Pending Approval', 'Payment Submitted', 'Awaiting Payment'];
                         $paymentColors = [
                             'Pending' => 'bg-yellow-100 text-yellow-700',
                             'For Verification' => 'bg-indigo-100 text-indigo-700',
@@ -53,17 +62,95 @@
                     @endphp
 
                     @foreach($bookings as $booking)
+
+                    @php
+                        $meta = $booking->payment_meta ?? [];
+
+                        $paymentFor = $meta['payment_for'] ?? 'booking';
+                        $paymentOpt = $meta['payment_option'] ?? null;
+
+                        $isReservationDeposit = $paymentFor === 'reservation' && $paymentOpt === 'deposit';
+
+                        // amount actually paid
+                        if ($isReservationDeposit) {
+                            $paymentTypeLabel  = 'Deposit Only';
+                            $amountPaid        = $booking->security_deposit;
+                            $balanceRemaining  = max(0, $booking->total_amount - $booking->security_deposit);
+                        } elseif ($paymentOpt === 'full') {
+                            $paymentTypeLabel  = 'Full Payment';
+                            $amountPaid        = $booking->total_amount;
+                            $balanceRemaining  = 0;
+                        } else {
+                            // old bookings / no meta
+                            $paymentTypeLabel  = '—';
+                            $amountPaid        = 0;
+                            $balanceRemaining  = 0;
+                        }
+                    @endphp
+
                     <tr class="hover:bg-indigo-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap">{{ $booking->booking_id }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">{{ $booking->user->name }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">{{ $booking->vehicle->Brand ?? 'Unknown' }} {{ $booking->vehicle->Model ?? '' }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            {{ \Carbon\Carbon::parse($booking->pickup_datetime)->format('M d, Y H:i') }} → 
+                            {{ $booking->vehicle->Brand ?? 'Unknown' }} {{ $booking->vehicle->Model ?? '' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {{ \Carbon\Carbon::parse($booking->pickup_datetime)->format('M d, Y H:i') }} →
                             {{ \Carbon\Carbon::parse($booking->return_datetime)->format('M d, Y H:i') }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">{{ $booking->pickup_location }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">{{ $booking->dropoff_location }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">₱{{ number_format($booking->total_amount, 2) }}</td>
+
+                        @php
+                            $meta          = $booking->payment_meta ?? [];
+                            $total         = (float) ($booking->total_amount ?? 0);
+                            $paidAmount    = (float) ($booking->paid_amount ?? 0);
+
+                            // If old data has no paid_amount but is already marked as Paid, assume fully paid
+                            if ($paidAmount <= 0 && $booking->payment_status === 'Paid') {
+                                $paidAmount = $total;
+                            }
+
+                            $isFullyPaid       = $total > 0 && $paidAmount >= $total - 0.01; // small rounding tolerance
+                            $balanceRemaining  = max(0, $total - $paidAmount);
+
+                            $isDepositPayment =
+                                ($meta['payment_for']    ?? null) === 'reservation' &&
+                                ($meta['payment_option'] ?? null) === 'deposit';
+                        @endphp
+
+                        {{-- ✅ PAYMENT TYPE --}}
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            @if($isFullyPaid)
+                                <span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">
+                                    Full Payment
+                                </span>
+                            @elseif($isDepositPayment)
+                                <div class="flex flex-col">
+                                    <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">
+                                        Deposit Only
+                                    </span>
+                                    @if($balanceRemaining > 0)
+                                        <span class="text-xs text-red-500 mt-1">
+                                            Balance: ₱{{ number_format($balanceRemaining, 2) }}
+                                        </span>
+                                    @endif
+                                </div>
+                            @else
+                                <span class="text-gray-400">—</span>
+                            @endif
+                        </td>
+
+                        {{-- ✅ PAID AMOUNT --}}
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            @if($paidAmount > 0)
+                                ₱{{ number_format(min($paidAmount, $total), 2) }}
+                            @else
+                                <span class="text-gray-400">—</span>
+                            @endif
+                        </td>
+
                         <td class="px-6 py-4 whitespace-nowrap">
                             @if($booking->receipt_screenshot)
                                 <a href="#" data-modal-toggle="paymentModal{{ $booking->booking_id }}" class="text-indigo-600 hover:underline">📎 View</a>
@@ -142,19 +229,53 @@
     </div>
 </div>
 
-<!-- ✅ Modals -->
+<!--  Modals -->
 @foreach($bookings as $booking)
     @if($booking->receipt_screenshot)
         <!-- Proof of Payment Modal -->
         <div id="paymentModal{{ $booking->booking_id }}" class="modal hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white rounded-2xl shadow-lg w-11/12 md:w-2/3 lg:w-1/2 p-6">
                 <h2 class="text-xl font-bold mb-4">Proof of Payment</h2>
+                        @php
+            $meta = $booking->payment_meta ?? [];
+
+            $isReservationDeposit =
+                ($meta['payment_for'] ?? null) === 'reservation' &&
+                ($meta['payment_option'] ?? null) === 'deposit';
+
+            // How much the customer actually paid
+            $amountPaid = $isReservationDeposit
+                ? $booking->security_deposit
+                : $booking->total_amount;
+
+            // Balance only matters if deposit only
+            $balanceRemaining = $isReservationDeposit
+                ? max(0, $booking->total_amount - $booking->security_deposit)
+                : 0;
+
+            // Label for admin
+            if ($isReservationDeposit) {
+                $paymentTypeLabel = 'Deposit Only';
+            } elseif (($meta['payment_option'] ?? null) === 'full') {
+                $paymentTypeLabel = 'Full Payment';
+            } else {
+                $paymentTypeLabel = '—';
+            }
+        @endphp
                 <img src="{{ asset('storage/' . $booking->receipt_screenshot) }}" 
                      alt="Proof of Payment" 
                      class="w-full max-w-md max-h-[400px] mx-auto rounded-lg mb-4 object-contain">
                 <p><strong>Payer Name:</strong> {{ $booking->payer_name }}</p>
                 <p><strong>Payer Number:</strong> {{ $booking->payer_number }}</p>
-                <p><strong>Amount Sent:</strong> ₱{{ number_format($booking->total_amount, 2) }}</p>
+                <p><strong>Payment Type:</strong> {{ $paymentTypeLabel }}</p>
+                <p><strong>Amount Paid:</strong>
+                    ₱{{ number_format($amountPaid, 2) }}
+                </p>
+                @if($isReservationDeposit)
+                    <p><strong>Balance Remaining:</strong>
+                        ₱{{ number_format($balanceRemaining, 2) }}
+                    </p>
+                @endif
                 <p><strong>Date Uploaded:</strong> {{ $booking->updated_at }}</p>
                 <div class="mt-6 text-right">
                     <button data-modal-toggle="paymentModal{{ $booking->booking_id }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl">Close</button>

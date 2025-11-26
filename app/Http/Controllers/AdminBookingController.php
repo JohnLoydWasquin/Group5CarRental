@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Booking;
 use App\Services\SmsService;
+use Carbon\Carbon;
 
 class AdminBookingController extends Controller
 {
@@ -26,24 +27,70 @@ class AdminBookingController extends Controller
     }
 
     // Confirm a booking
-    public function confirm(Booking $booking)
-    {
-        $booking->booking_status = 'Confirmed';
+    // Confirm a booking (first payment OR balance payment)
+public function confirm(Booking $booking)
+{
+    $meta = $booking->payment_meta ?? [];
+    $isBalancePayment = ($meta['payment_for'] ?? null) === 'balance';
+
+    if ($isBalancePayment) {
+
+        // Mark payment as fully paid
         $booking->payment_status = 'Paid';
-        $booking->save();
 
-        // Send SMS
-        if ($booking->user->phone) {
-            $vehicleName = $booking->vehicle ? $booking->vehicle->Brand . ' ' . $booking->vehicle->Model : 'Unknown Vehicle';
-            $message = "Hello {$booking->user->name}, your booking #{$booking->booking_id} for vehicle {$vehicleName} from " .
-                \Carbon\Carbon::parse($booking->pickup_datetime)->format('M d, Y H:i') . " to " .
-                \Carbon\Carbon::parse($booking->return_datetime)->format('M d, Y H:i') . " has been confirmed. Thank you for choosing us!";
-
-            $this->smsService->sendMessage($booking->user->phone, $message);
+        // Make sure paid_amount is at least the total
+        if (($booking->paid_amount ?? 0) < $booking->total_amount) {
+            $booking->paid_amount = $booking->total_amount;
         }
 
-        return redirect()->back()->with('success', 'Booking confirmed and SMS sent to customer!');
+        // If status was left as "Payment Submitted", push it back to Ongoing
+        // (or just keep whatever it currently is if you prefer)
+        if ($booking->booking_status === 'Payment Submitted') {
+            $booking->booking_status = 'Ongoing';
+        }
+
+    } else {
+
+        $booking->booking_status = 'Confirmed';
+        $booking->payment_status = 'Paid';
+
+        // Vehicle becomes unavailable once confirmed
+        if ($booking->vehicle) {
+            $booking->vehicle->availability = false;
+            $booking->vehicle->save();
+        }
     }
+
+    $booking->save();
+
+    // ===== SMS notification (kept, but with branch text) =====
+    if ($booking->user && $booking->user->phone) {
+        $vehicleName = $booking->vehicle
+            ? $booking->vehicle->Brand . ' ' . $booking->vehicle->Model
+            : 'vehicle';
+
+        if ($isBalancePayment) {
+            $message = "Hello {$booking->user->name}, your remaining balance for booking #{$booking->booking_id} "
+                     . "has been verified. The booking is now fully paid. Thank you!";
+        } else {
+            $message = "Hello {$booking->user->name}, your booking #{$booking->booking_id} for {$vehicleName} from "
+                     . Carbon::parse($booking->pickup_datetime)->format('M d, Y H:i')
+                     . " to "
+                     . Carbon::parse($booking->return_datetime)->format('M d, Y H:i')
+                     . " has been confirmed. Thank you for choosing us!";
+        }
+
+        $this->smsService->sendMessage($booking->user->phone, $message);
+    }
+
+    return back()->with(
+        'success',
+        $isBalancePayment
+            ? 'Balance payment verified (booking is now fully paid).'
+            : 'Booking confirmed and SMS sent to customer!'
+    );
+}
+
 
     // Reject a booking
     public function reject(Request $request, Booking $booking, SmsService $smsService)
@@ -99,7 +146,13 @@ class AdminBookingController extends Controller
     // Mark booking as completed
     public function markCompleted(Booking $booking)
     {
+        // Optional safety: don’t complete if not fully paid
+        if (($booking->paid_amount ?? 0) < $booking->total_amount) {
+            return back()->with('error', 'Cannot complete: customer still has an outstanding balance.');
+        }
+
         $booking->booking_status = 'Completed';
+        $booking->payment_status = 'Paid';   // ✅ mark payment fully paid too
         $booking->save();
 
         if ($booking->vehicle) {
@@ -107,6 +160,52 @@ class AdminBookingController extends Controller
             $booking->vehicle->save();
         }
 
-        return back()->with('success', 'Booking marked as Completed. Vehicle is now available again.');
+        return back()->with('success', 'Booking marked as Completed and fully paid. Vehicle is now available again.');
+    }
+
+    public function approveRefund(Request $request, Booking $booking)
+    {
+        if ($booking->refund_status !== 'pending') {
+            return back()->with('error', 'No pending refund for this booking.');
+        }
+
+        $maxRefund = (float) ($booking->paid_amount ?? 0);
+
+        $data = $request->validate([
+            'refund_amount' => 'required|numeric|min:0|max:' . $maxRefund,
+        ]);
+
+        $refundAmount = (float) $data['refund_amount'];
+
+        // update refund fields
+        $booking->refund_status = 'approved';
+        $booking->refund_amount = $refundAmount;
+
+        // mark payment as refunded (business choice)
+        $booking->payment_status = 'Refunded';
+        // optional: cancel & free vehicle
+        $booking->booking_status = 'Cancelled';
+        if ($booking->vehicle) {
+            $booking->vehicle->availability = true;
+            $booking->vehicle->save();
+        }
+
+        $booking->save();
+
+        // TODO: actually send money back via payment gateway, or mark in finance system
+
+        return back()->with('success', 'Refund approved and booking cancelled.');
+    }
+
+    public function rejectRefund(Booking $booking)
+    {
+        if ($booking->refund_status !== 'pending') {
+            return back()->with('error', 'No pending refund for this booking.');
+        }
+
+        $booking->refund_status = 'rejected';
+        $booking->save();
+
+        return back()->with('success', 'Refund request rejected.');
     }
 }

@@ -70,7 +70,7 @@
             class="w-full border-gray-300 rounded-lg p-3 border focus:ring-green-500 focus:border-green-500 pr-10"
             onfocus="showPasswordHint()" onblur="hidePasswordHint()" oninput="validatePassword(this.value)">
           <button type="button" onclick="togglePassword('password', this)"
-            class="absolute right-3 top-12 text-gray-500 hover:text-gray-700">
+            class="absolute right-3 top-9 text-gray-500 hover:text-gray-700">
             <i class="fa-solid fa-eye"></i>
           </button>
           @error('password') <p class="text-red-500 text-sm">{{ $message }}</p> @enderror
@@ -91,7 +91,7 @@
           <input type="password" id="password_confirmation" name="password_confirmation" required
             class="w-full border-gray-300 rounded-lg p-3 border focus:ring-green-500 focus:border-green-500 pr-10">
           <button type="button" onclick="togglePassword('password_confirmation', this)"
-            class="absolute right-3 top-12 text-gray-500 hover:text-gray-700">
+            class="absolute right-3 top-9 text-gray-500 hover:text-gray-700">
             <i class="fa-solid fa-eye"></i>
           </button>
         </div>

@@ -8,18 +8,52 @@ $receiverId = $receiverId ?? $firstUser?->id;
 $receiver = $receiver ?? $firstUser;
 @endphp
 
-<div class="flex space-x-4">
+<div class="flex w-full max-w-full gap-4 overflow-x-hidden">
 
     <!-- User list -->
-    <div class="w-1/4 bg-gray-100 rounded p-2 space-y-2 h-[80vh] overflow-y-auto">
+    <div class="w-64 bg-gray-100 rounded p-2 space-y-2 h-[80vh] overflow-y-auto">
         <h3 class="font-bold mb-2">Users</h3>
 
         @foreach($users as $chatUser)
-            <button class="w-full text-left px-3 py-2 rounded hover:bg-gray-200 chat-user-btn 
-                {{ $chatUser->id === $receiverId ? 'bg-gray-300' : '' }}" 
-                data-user-id="{{ $chatUser->id }}">
-                {{ $chatUser->name }}
-            </button>
+        <button
+            class="w-full text-left px-3 py-2 rounded hover:bg-gray-200 chat-user-btn
+                flex items-center justify-between gap-2
+                {{ $chatUser->id === $receiverId ? 'bg-gray-300' : '' }}"
+            data-user-id="{{ $chatUser->id }}"
+            data-unread="{{ $chatUser->unread_count }}">
+
+            <div class="flex flex-col">
+                <span
+                    class="chat-user-name text-sm
+                        {{ $chatUser->unread_count ? 'font-semibold text-gray-900' : 'font-medium text-gray-700' }}">
+                    {{ $chatUser->name }}
+                    @if($chatUser->role)
+                        ({{ ucfirst($chatUser->role) }})
+                    @endif
+                </span>
+
+                <span
+                    class="chat-user-preview text-xs max-w-[11rem] truncate
+                        {{ $chatUser->unread_count ? 'font-semibold text-gray-900' : 'text-gray-500' }}">
+                    @if($chatUser->last_message)
+                        {{ $chatUser->last_message }}
+                    @else
+                        <span class="italic text-gray-400">No messages yet</span>
+                    @endif
+                </span>
+            </div>
+
+            {{-- Right: time + blue unread dot --}}
+            <div class="flex flex-col items-end gap-1">
+                <span class="text-[0.7rem] text-gray-400">
+                    {{ $chatUser->last_message_label }}
+                </span>
+
+                @if($chatUser->unread_count > 0)
+                    <span class="chat-unread-dot w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                @endif
+            </div>
+        </button>
         @endforeach
     </div>
 
@@ -39,7 +73,7 @@ $receiver = $receiver ?? $firstUser;
     @endphp
 
     <div id="chatContainer"
-        class="flex flex-col w-3/4 h-[80vh] bg-white rounded-lg shadow p-4"
+        class="flex flex-col flex-1 h-[80vh] bg-white rounded-lg shadow p-4"
         data-user-id="{{ auth()->user()->id }}"
         data-receiver-id="{{ $receiver->id ?? '' }}"
         data-chats='@json($chatMessages)'
@@ -95,10 +129,8 @@ $receiver = $receiver ?? $firstUser;
             </div>
 
             <button id="sendBtn" class="text-yellow-500 hover:text-yellow-600 cursor-pointer">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none"
-                     viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                        d="M4.5 12l15-8v16l-15-8z" />
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M5 4l14 8-14 8V4z" />
                 </svg>
             </button>
         </div>

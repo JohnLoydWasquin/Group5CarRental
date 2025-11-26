@@ -69,7 +69,30 @@ function updateImage() {
     localStorage.setItem('currentImageIndex', currentIndex);
 }
 
-  function togglePassword(fieldId, element) {
+const nextBtn = document.getElementById("nextBtn");
+const prevBtn = document.getElementById("prevBtn");
+
+if (nextBtn) {
+  nextBtn.addEventListener("click", nextImage);
+}
+
+if (prevBtn) {
+  prevBtn.addEventListener("click", prevImage);
+}
+
+// Make dots clickable
+dots.forEach((dot, i) => {
+  dot.addEventListener("click", () => {
+    currentIndex = i;
+    updateImage();
+  });
+});
+
+updateImage();
+
+setInterval(nextImage, 4000);
+
+function togglePassword(fieldId, element) {
     const input = document.getElementById(fieldId);
     const icon = element.querySelector('i');
     if (input.type === "password") {
@@ -79,11 +102,14 @@ function updateImage() {
         input.type = "password";
         icon.classList.replace('fa-eye-slash', 'fa-eye');
     }
-  }
+}
 
-document.getElementById('togglePassword').addEventListener('click', function() {
-  togglePassword('password', this);
-});
+const togglePasswordLoginBtn = document.getElementById('togglePassword');
+if (togglePasswordLoginBtn) {
+  togglePasswordLoginBtn.addEventListener('click', function() {
+    togglePassword('password', this);
+  });
+}
 
 function showPasswordHint() {
   document.getElementById('passwordHint').style.display = 'block';

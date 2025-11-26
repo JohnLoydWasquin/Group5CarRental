@@ -8,46 +8,122 @@ use Illuminate\Http\Request;
 use App\Events\NewChatMessage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class ChatController extends Controller
 {
     public function index($userId = null)
     {
-        $users = User::where('id', '!=', Auth::id())
-                     ->whereIn('role', ['staff', 'admin'])
-                     ->get();
+        $authId = Auth::id();
 
-        $messages = [];
+        $users = User::where('id', '!=', $authId)
+                    ->whereIn('role', ['staff', 'admin'])
+                    ->get();
+
+        $messages = collect();
         $receiver = null;
 
         if ($userId) {
             $receiver = User::findOrFail($userId);
 
-            $messages = Chat::where(function ($q) use ($userId) {
-                $q->where('sender_id', Auth::id())
-                  ->where('receiver_id', $userId);
-            })
-            ->orWhere(function ($q) use ($userId) {
-                $q->where('sender_id', $userId)
-                  ->where('receiver_id', Auth::id());
-            })
-            ->orderBy('created_at', 'asc')
-            ->get();
+            $messages = Chat::where(function ($q) use ($userId, $authId) {
+                    $q->where('sender_id', $authId)
+                    ->where('receiver_id', $userId);
+                })
+                ->orWhere(function ($q) use ($userId, $authId) {
+                    $q->where('sender_id', $userId)
+                    ->where('receiver_id', $authId);
+                })
+                ->orderBy('created_at', 'asc')
+                ->get();
+
+            Chat::where('sender_id', $userId)
+                ->where('receiver_id', $authId)
+                ->where('is_read', false)
+                ->update(['is_read' => true]);
         }
+
+                $users = $users->map(function ($user) use ($authId) {
+                $last = Chat::where(function ($q) use ($authId, $user) {
+                            $q->where('sender_id', $authId)
+                            ->where('receiver_id', $user->id);
+                        })
+                        ->orWhere(function ($q) use ($authId, $user) {
+                            $q->where('sender_id', $user->id)
+                            ->where('receiver_id', $authId);
+                        })
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+
+                $unread = Chat::where('sender_id', $user->id)
+                            ->where('receiver_id', $authId)
+                            ->where('is_read', false)
+                            ->count();
+
+                // ---- last message preview ----
+                $preview = null;
+                if ($last) {
+                    if ($last->message) {
+                        $preview = $last->message;
+                    } elseif ($last->file) {
+                        $preview = '📎 Attachment';
+                    } elseif ($last->audio) {
+                        $preview = '🎤 Voice message';
+                    }
+                }
+
+                // ---- short time label like 24m, 3h, 2d ----
+                $timeLabel = null;
+                if ($last && $last->created_at) {
+                    $date = $last->created_at instanceof Carbon
+                        ? $last->created_at
+                        : Carbon::parse($last->created_at);
+
+                    $now = Carbon::now();
+
+                    $mins = (int) $date->diffInMinutes($now);
+                    if ($mins < 60) {
+                        $timeLabel = $mins . 'm';
+                    } else {
+                        $hours = (int) $date->diffInHours($now);
+                        if ($hours < 24) {
+                            $timeLabel = $hours . 'h';
+                        } else {
+                            $days = (int) $date->diffInDays($now);
+                            $timeLabel = $days . 'd';
+                        }
+                    }
+                }
+
+                $user->last_message       = $preview;
+                $user->last_message_time  = $last?->created_at;
+                $user->last_message_label = $timeLabel;
+                $user->unread_count       = $unread;
+
+                return $user;
+            })
+            ->sortByDesc('last_message_time')
+            ->values();
+
+        $unreadCount = Chat::where('receiver_id', $authId)
+            ->where('is_read', false)
+            ->count();
 
         if (request()->wantsJson()) {
             return response()->json([
-                'messages' => $messages,
-                'receiverId' => $userId,
-                'receiverName' => $receiver?->name ?? 'Unknown'
+                'messages'     => $messages,
+                'receiverId'   => $userId,
+                'receiverName' => $receiver?->name ?? 'Unknown',
+                'unreadCount'  => $unreadCount,
             ]);
         }
 
         return view('layouts.chat.chat', [
-            'users' => $users,
-            'messages' => $messages,
-            'receiverId' => $userId,
-            'receiver' => $receiver
+            'users'           => $users,
+            'messages'        => $messages,
+            'receiverId'      => $userId,
+            'receiver'        => $receiver,
+            'chatUnreadCount' => $unreadCount,
         ]);
     }
 
@@ -95,11 +171,10 @@ class ChatController extends Controller
 {
     try {
         $request->validate([
-            'file' => 'required|file|max:10240', // max 10MB
+            'file' => 'required|file|max:10240',
             'receiver_id' => 'required|exists:users,id',
         ]);
 
-        // Store the file in public disk
         $path = $request->file('file')->store('chat_files', 'public');
 
         $message = Chat::create([
@@ -117,7 +192,6 @@ class ChatController extends Controller
             'created_at' => $message->created_at,
         ]);
     } catch (\Exception $e) {
-        // Log the error so we can see it in storage/logs/laravel.log
         Log::error('Send File Error: '.$e->getMessage());
         return response()->json(['error' => 'Failed to send file'], 500);
     }

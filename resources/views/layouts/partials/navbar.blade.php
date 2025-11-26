@@ -18,9 +18,17 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav mx-auto">
                 <li class="nav-item"><a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">Home</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">Vehicles</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">RateUs</a></li>
                 <li class="nav-item"><a class="nav-link {{ request()->routeIs('about') ? 'active' : '' }}" href="{{ route('about') }}">About</a></li>
                 <li class="nav-item"><a class="nav-link {{ request()->routeIs('contact') ? 'active' : ''}}" href="{{ route('contact') }}">Contact</a></li>
+                @auth
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('reservations.index') ? 'active' : '' }}"
+                    href="{{ route('reservations.index') }}">
+                    MyTransactions
+                    </a>
+                </li>
+                @endauth
             </ul>
 
             {{-- User Profile --}}
@@ -72,8 +80,6 @@
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ route('profile') }}">View Profile</a></li>
-                            <li><a class="dropdown-item" href="{{ route('userBooking') }}">My Bookings</a></li>
-                            <li><a class="dropdown-item" href="{{ route('settings') }}">Settings</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form action="{{ route('logout') }}" method="POST" class="d-inline">

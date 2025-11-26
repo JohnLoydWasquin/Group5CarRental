@@ -2,9 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Booking;
+use App\Models\KycSubmission;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+
+/**
+ * @property \App\Models\KycSubmission|null $kycSubmission
+ */
 
 class User extends Authenticatable
 {
@@ -16,6 +22,8 @@ class User extends Authenticatable
         'phone',
         'address',
         'role',
+        'profile_image',
+        'kyc_status',
     ];
 
     protected $hidden = [
@@ -39,7 +47,12 @@ class User extends Authenticatable
     }
 
     public function bookings(){
-        return $this->hasMany(\App\Models\Booking::class, 'user_id', 'id');
+        return $this->hasMany(Booking::class, 'user_id', 'id');
+    }
+
+    public function kycSubmission()
+    {
+        return $this->hasOne(KycSubmission::class);
     }
 }
 

@@ -35,6 +35,7 @@
                     <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Plate No</th>
                     <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Brand & Model</th>
                     <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Availability</th>
+                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Passengers</th>
                     <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Price/Day</th>
                     <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Condition</th>
                     <th class="px-4 py-3 text-center text-sm font-medium text-gray-600">Actions</th>
@@ -49,9 +50,26 @@
                         <span>{{ $vehicle->Model }}</span>
                     </td>
                     <td class="px-4 py-3">
-                        <span class="px-2 py-1 rounded-full text-sm font-medium {{ $vehicle->Availability ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                            {{ $vehicle->Availability ? 'Available' : 'Rented' }}
+                        <span class="px-2 py-1 rounded-full text-sm font-medium
+                            @if($vehicle->Condition === 'Maintenance')
+                                bg-gray-300 text-gray-800
+                            @elseif(!$vehicle->Availability)
+                                bg-red-100 text-red-800
+                            @else
+                                bg-green-100 text-green-800
+                            @endif
+                        ">
+                            @if($vehicle->Condition === 'Maintenance')
+                                Unavailable
+                            @elseif(!$vehicle->Availability)
+                                Rented
+                            @else
+                                Available
+                            @endif
                         </span>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        {{ $vehicle->Passengers ?? 'N/A' }}
                     </td>
                     <td class="px-4 py-3">₱{{ number_format($vehicle->DailyPrice, 2) }}</td>
                     <td class="px-4 py-3">
@@ -106,20 +124,22 @@
             @csrf
             @method('PUT')
 
-            <input type="text" name="PlateNo" id="PlateNo" placeholder="Plate No" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400">
-            <input type="text" name="Brand" id="Brand" placeholder="Brand" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400">
-            <input type="text" name="Model" id="Model" placeholder="Model" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400">
-            <input type="number" name="DailyPrice" id="DailyPrice" placeholder="Price/Day" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400">
+            <input type="text" name="PlateNo" id="editPlateNo" placeholder="Plate No" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400">
+            <input type="text" name="Brand" id="editBrand" placeholder="Brand" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400">
+            <input type="text" name="Model" id="editModel" placeholder="Model" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400">
+            <input type="number" name="DailyPrice" id="editDailyPrice" placeholder="Price/Day" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400">
             
-            <select name="Availability" id="Availability" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400">
+            <select name="Availability" id="editAvailability" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400">
                 <option value="1">Available</option>
                 <option value="0">Rented</option>
             </select>
 
-            <select name="Condition" id="Condition" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400">
+            <input type="number" name="Passengers" min="1" placeholder="Passengers" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400" value="{{ old('Passengers', 4) }}">
+
+            <select name="Condition" id="editCondition" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400">
                 <option value="Excellent">Excellent</option>
                 <option value="Fair">Fair</option>
-                <option value="Poor">Poor</option>
+                <option value="Maintenance">Maintenance</option>
             </select>
 
             <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
@@ -138,27 +158,35 @@
         <form id="addVehicleForm" method="POST" action="{{ route('admin.vehicles.store') }}" enctype="multipart/form-data" class="space-y-4">
             @csrf
 
-            <input type="text" name="PlateNo" placeholder="Plate No" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400">
-            <input type="text" name="Brand" placeholder="Brand" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400">
-            <input type="text" name="Model" placeholder="Model" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400">
-            <input type="number" name="DailyPrice" placeholder="Price/Day" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400">
+            {{-- Validation Errors --}}
+            @if ($errors->any())
+            <div class="bg-red-100 text-red-700 p-2 rounded mb-2">
+                <ul class="list-disc pl-5">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+            @endif
 
-            <select name="Availability" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400">
-                <option value="1">Available</option>
-                <option value="0">Rented</option>
-            </select>
+            <input type="text" name="PlateNo" placeholder="Plate No" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400" value="{{ old('PlateNo') }}">
+            <input type="text" name="Brand" placeholder="Brand" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400" value="{{ old('Brand') }}">
+            <input type="text" name="Model" placeholder="Model" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400" value="{{ old('Model') }}">
+            <input type="number" name="DailyPrice" placeholder="Price/Day" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400" value="{{ old('DailyPrice') }}">
+
+            <input type="number" name="Passengers" min="1" placeholder="Passengers" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400" value="{{ old('Passengers', 4) }}">
 
             <select name="Condition" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-yellow-400">
-                <option value="Excellent">Excellent</option>
-                <option value="Fair">Fair</option>
-                <option value="Poor">Poor</option>
+                <option value="Excellent" {{ old('Condition') == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                <option value="Fair" {{ old('Condition') == 'Fair' ? 'selected' : '' }}>Fair</option>
+                <option value="Poor" {{ old('Condition') == 'Poor' ? 'selected' : '' }}>Poor</option>
             </select>
 
             <!-- Vehicle Image Upload -->
             <div>
                 <label class="block text-sm font-medium mb-1">Vehicle Image</label>
                 <input type="file" name="Image" id="addImage" accept="image/*" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-yellow-400">
-                <img id="addImagePreview" src="#" alt="Image Preview" class="hidden mt-2 w-32 h-20 object-cover rounded">
+                <img id="addImagePreview" src="{{ $vehicle->Image ? asset('storage/' . $vehicle->Image) : 'default-car.png' }}" alt="Image Preview" class="hidden mt-2 w-32 h-20 object-cover rounded">
             </div>
 
             <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
@@ -168,3 +196,50 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    const addImageInput = document.getElementById('addImage');
+    const addImagePreview = document.getElementById('addImagePreview');
+
+    addImageInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            addImagePreview.src = URL.createObjectURL(file);
+            addImagePreview.classList.remove('hidden');
+        } else {
+            addImagePreview.src = '#';
+            addImagePreview.classList.add('hidden');
+        }
+    });
+</script>
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const conditionSelect    = document.getElementById('editCondition');
+    const availabilitySelect = document.getElementById('editAvailability');
+
+    if (!conditionSelect || !availabilitySelect) return;
+
+    function syncAvailabilityWithCondition() {
+        if (conditionSelect.value === 'Maintenance') {
+            availabilitySelect.value = '0';
+            availabilitySelect.disabled = true;
+        } else {
+            availabilitySelect.disabled = false;
+
+            if (conditionSelect.value === 'Excellent') {
+                availabilitySelect.value = '1';
+            }
+        }
+    }
+
+    conditionSelect.addEventListener('change', syncAvailabilityWithCondition);
+
+    // Optional: if the modal opens with Maintenance already selected and you want it disabled immediately:
+    // syncAvailabilityWithCondition();
+
+    window.syncAvailabilityWithCondition = syncAvailabilityWithCondition;
+});
+</script>
+@endpush

@@ -17,6 +17,10 @@ use App\Http\Controllers\AdminBookingController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StaffCustomerController;
 use App\Http\Controllers\StaffVehicleController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ReservationController;
+use App\Http\Controllers\KycController;
+use App\Http\Controllers\AdminKycController;
 
 // Navigator
 Route::get('/', function () {return view('layouts.pages.home');})->name('home');
@@ -41,10 +45,13 @@ Route::get('/reset-password', [ForgotPasswordController::class, 'showResetPasswo
 Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword'])->name('reset_password');
 
 //Users Profile
-Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
+Route::middleware('auth')->group(function (){
+Route::get('/profile', [ProfileController::class, 'index'])->middleware('auth')->name('profile');
+Route::post('/profile/upload', [ProfileController::class, 'upload'])->name('profile.upload');
+Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 Route::get('/userBooking', [BookingController::class, 'index'])->name('userBooking');
-Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+});
 
 //Contact Message
 Route::post('/contact/send', [ContactController::class,'sendMessage'])->name('contact_send');
@@ -53,6 +60,15 @@ Route::post('/contact/send', [ContactController::class,'sendMessage'])->name('co
 Route::middleware(['auth'])->group(function () {
     Route::post('/vehicles', [BookingController::class, 'store'])->name('vehicles.store');
     Route::post('/booking/payment', [BookingController::class, 'submitPayment'])->name('booking.payment');
+    Route::post('/booking/reserve', [BookingController::class, 'reserve'])->name('booking.reserve');
+    Route::get('/my-reservations', [ReservationController::class, 'index'])->name('reservations.index');
+    Route::post('/reservations/{booking}/pay', [ReservationController::class, 'pay'])->name('reservations.pay');
+    Route::post('/reservations/{booking}/cancel', [ReservationController::class, 'cancel'])
+        ->name('reservations.cancel');
+    Route::post('/bookings/{booking}/pay-balance', [BookingController::class, 'payBalance'])
+        ->name('reservations.payBalance');
+    Route::post('/reservations/{booking}/refund', [ReservationController::class, 'requestRefund'])
+        ->name('reservations.refundRequest');
 });
 
 //Admin routing
@@ -86,6 +102,10 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::post('/bookings/{booking}/reject', [AdminBookingController::class, 'reject'])->name('admin.bookings.reject');
     Route::delete('/admin/bookings/{booking}/delete', [AdminBookingController::class, 'destroy'])
     ->name('admin.bookings.destroy');
+    Route::post('/admin/bookings/{booking}/refund-approve', [AdminBookingController::class, 'approveRefund'])
+    ->name('admin.bookings.refund.approve');
+    Route::post('/admin/bookings/{booking}/refund-reject', [AdminBookingController::class, 'rejectRefund'])
+    ->name('admin.bookings.refund.reject');
 });
 
 //Admin staff management
@@ -112,6 +132,25 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/chat/send', [ChatController::class, 'send'])->name('chat.send');
     Route::post('/chat/send-audio', [ChatController::class, 'sendAudio'])->name('chat.send.audio');
     Route::post('/chat/send-file', [ChatController::class, 'sendFile'])->name('chat.send.file');
+    // Route::delete('/chat/delete/{id}', [ChatController::class, 'delete'])->name('chat.delete');
 });
 
+//Staff/Admin Generating report
+Route::middleware(['auth'])->group(function () {
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
+});
 
+// Verify Users
+Route::middleware('auth')->group(function () {
+    Route::get('/kyc/verify', [KycController::class, 'create'])->name('kyc.form');
+    Route::post('/kyc/verify', [KycController::class, 'store'])->name('kyc.store');
+});
+
+// Admin – Account Verification (KYC)
+Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/verifications', [AdminKycController::class, 'index'])->name('admin.kyc.index');
+    Route::get('/verifications/{submission}', [AdminKycController::class, 'show'])->name('admin.kyc.show');
+    Route::post('/verifications/{submission}/approve', [AdminKycController::class, 'approve'])->name('admin.kyc.approve');
+    Route::post('/verifications/{submission}/reject', [AdminKycController::class, 'reject'])->name('admin.kyc.reject');
+});

@@ -23,27 +23,23 @@ class SendBookingReminders extends Command
     {
         $now = Carbon::now();
 
-        // Get bookings that are Confirmed or Ongoing
         $bookings = Booking::whereIn('booking_status', ['Confirmed', 'Ongoing'])->get();
 
         foreach ($bookings as $booking) {
             $return = Carbon::parse($booking->return_datetime);
 
-            // ✅ 1-day reminder (for rentals ending soon, 3–4 hrs before)
             if (!$booking->reminder_sent_3hrs && $now->diffInHours($return, false) <= 27 && $now->diffInHours($return, false) >= 23) {
                 $this->sendReminder($booking, '1-day');
                 $booking->reminder_sent_3hrs = 1;
                 $booking->save();
             }
 
-            // ✅ 1-week reminder (3 days before end)
             if (!$booking->reminder_sent_3days && $now->diffInDays($return, false) <= 7 && $now->diffInDays($return, false) >= 4) {
                 $this->sendReminder($booking, '1-week');
                 $booking->reminder_sent_3days = 1;
                 $booking->save();
             }
 
-            // ✅ 1-month reminder (3 weeks before end)
             if (!$booking->reminder_sent_1week && $now->diffInDays($return, false) <= 30 && $now->diffInDays($return, false) >= 22) {
                 $this->sendReminder($booking, '1-month');
                 $booking->reminder_sent_1week = 1;
