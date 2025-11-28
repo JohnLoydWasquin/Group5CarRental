@@ -26,73 +26,96 @@ class AdminBookingController extends Controller
         return view('layouts.authorities.adminBooking', compact('bookings'));
     }
 
-    // Confirm a booking
-    // Confirm a booking (first payment OR balance payment)
-public function confirm(Booking $booking)
-{
-    $meta = $booking->payment_meta ?? [];
-    $isBalancePayment = ($meta['payment_for'] ?? null) === 'balance';
+    public function confirm(Booking $booking)
+    {
+        $meta = $booking->payment_meta ?? [];
 
-    if ($isBalancePayment) {
+        $paymentFor  = $meta['payment_for']    ?? null;
+        $paymentOpt  = $meta['payment_option'] ?? null;
 
-        // Mark payment as fully paid
-        $booking->payment_status = 'Paid';
-
-        // Make sure paid_amount is at least the total
-        if (($booking->paid_amount ?? 0) < $booking->total_amount) {
-            $booking->paid_amount = $booking->total_amount;
-        }
-
-        // If status was left as "Payment Submitted", push it back to Ongoing
-        // (or just keep whatever it currently is if you prefer)
-        if ($booking->booking_status === 'Payment Submitted') {
-            $booking->booking_status = 'Ongoing';
-        }
-
-    } else {
-
-        $booking->booking_status = 'Confirmed';
-        $booking->payment_status = 'Paid';
-
-        // Vehicle becomes unavailable once confirmed
-        if ($booking->vehicle) {
-            $booking->vehicle->availability = false;
-            $booking->vehicle->save();
-        }
-    }
-
-    $booking->save();
-
-    // ===== SMS notification (kept, but with branch text) =====
-    if ($booking->user && $booking->user->phone) {
-        $vehicleName = $booking->vehicle
-            ? $booking->vehicle->Brand . ' ' . $booking->vehicle->Model
-            : 'vehicle';
+        $isBalancePayment      = $paymentFor === 'balance';
+        $isReservationDeposit  = $paymentFor === 'reservation' && $paymentOpt === 'deposit';
 
         if ($isBalancePayment) {
-            $message = "Hello {$booking->user->name}, your remaining balance for booking #{$booking->booking_id} "
-                     . "has been verified. The booking is now fully paid. Thank you!";
+
+            // 🔹 User just paid the remaining balance
+            $booking->payment_status = 'Paid';
+
+            if (($booking->paid_amount ?? 0) < $booking->total_amount) {
+                $booking->paid_amount = $booking->total_amount;
+            }
+
+            if ($booking->booking_status === 'Payment Submitted') {
+                $booking->booking_status = 'Ongoing';
+            }
+
+        } elseif ($isReservationDeposit) {
+
+            // 🔹 First payment = deposit only
+            $booking->booking_status = 'Confirmed';  // reservation is now confirmed
+            $booking->payment_status = 'Paid';       // deposit paid
+
+            // make sure we only count the deposit as paid
+            if (($booking->paid_amount ?? 0) < $booking->security_deposit) {
+                $booking->paid_amount = $booking->security_deposit;
+            }
+
+            if ($booking->vehicle) {
+                $booking->vehicle->availability = false;
+                $booking->vehicle->save();
+            }
+
         } else {
-            $message = "Hello {$booking->user->name}, your booking #{$booking->booking_id} for {$vehicleName} from "
-                     . Carbon::parse($booking->pickup_datetime)->format('M d, Y H:i')
-                     . " to "
-                     . Carbon::parse($booking->return_datetime)->format('M d, Y H:i')
-                     . " has been confirmed. Thank you for choosing us!";
+            // 🔹 Book Now with full payment OR reservation with full payment
+            $booking->booking_status = 'Confirmed';
+            $booking->payment_status = 'Paid';
+
+            if (($booking->paid_amount ?? 0) < $booking->total_amount) {
+                $booking->paid_amount = $booking->total_amount;
+            }
+
+            if ($booking->vehicle) {
+                $booking->vehicle->availability = false;
+                $booking->vehicle->save();
+            }
         }
 
-        $this->smsService->sendMessage($booking->user->phone, $message);
+        $booking->save();
+
+        // ===== SMS notification =====
+        if ($booking->user && $booking->user->phone) {
+            $vehicleName = $booking->vehicle
+                ? $booking->vehicle->Brand . ' ' . $booking->vehicle->Model
+                : 'vehicle';
+
+            if ($isBalancePayment) {
+                $message = "Hello {$booking->user->name}, your remaining balance for booking #{$booking->booking_id} "
+                        . "has been verified. The booking is now fully paid. Thank you!";
+            } elseif ($isReservationDeposit) {
+                $message = "Hello {$booking->user->name}, your reservation deposit for booking #{$booking->booking_id} "
+                        . "has been verified. The booking is confirmed, with a remaining balance of "
+                        . '₱' . number_format(max(0, $booking->total_amount - $booking->paid_amount), 2) . ".";
+            } else {
+                $message = "Hello {$booking->user->name}, your booking #{$booking->booking_id} for {$vehicleName} from "
+                        . Carbon::parse($booking->pickup_datetime)->format('M d, Y H:i')
+                        . " to "
+                        . Carbon::parse($booking->return_datetime)->format('M d, Y H:i')
+                        . " has been confirmed. Thank you for choosing us!";
+            }
+
+            $this->smsService->sendMessage($booking->user->phone, $message);
+        }
+
+        return back()->with(
+            'success',
+            $isBalancePayment
+                ? 'Balance payment verified (booking is now fully paid).'
+                : ($isReservationDeposit
+                    ? 'Reservation deposit verified (booking confirmed with remaining balance).'
+                    : 'Booking confirmed and SMS sent to customer!')
+        );
     }
 
-    return back()->with(
-        'success',
-        $isBalancePayment
-            ? 'Balance payment verified (booking is now fully paid).'
-            : 'Booking confirmed and SMS sent to customer!'
-    );
-}
-
-
-    // Reject a booking
     public function reject(Request $request, Booking $booking, SmsService $smsService)
     {
         $request->validate([
@@ -146,13 +169,21 @@ public function confirm(Booking $booking)
     // Mark booking as completed
     public function markCompleted(Booking $booking)
     {
-        // Optional safety: don’t complete if not fully paid
-        if (($booking->paid_amount ?? 0) < $booking->total_amount) {
+        $total = (float) $booking->total_amount;
+        $paid  = (float) ($booking->paid_amount ?? 0);
+
+        if ($paid <= 0 && $booking->payment_status === 'Paid') {
+            $paid = $total;
+            $booking->paid_amount = $total;
+            $booking->save();
+        }
+
+        if ($paid < $total) {
             return back()->with('error', 'Cannot complete: customer still has an outstanding balance.');
         }
 
         $booking->booking_status = 'Completed';
-        $booking->payment_status = 'Paid';   // ✅ mark payment fully paid too
+        $booking->payment_status = 'Paid';
         $booking->save();
 
         if ($booking->vehicle) {
@@ -163,38 +194,56 @@ public function confirm(Booking $booking)
         return back()->with('success', 'Booking marked as Completed and fully paid. Vehicle is now available again.');
     }
 
-    public function approveRefund(Request $request, Booking $booking)
+    public function approveRefund(Booking $booking)
     {
         if ($booking->refund_status !== 'pending') {
             return back()->with('error', 'No pending refund for this booking.');
         }
 
-        $maxRefund = (float) ($booking->paid_amount ?? 0);
+        $paidAmount = (float) ($booking->paid_amount ?? 0);
 
-        $data = $request->validate([
-            'refund_amount' => 'required|numeric|min:0|max:' . $maxRefund,
-        ]);
+        if ($paidAmount <= 0) {
+            return back()->with('error', 'This booking has no recorded payment to refund.');
+        }
 
-        $refundAmount = (float) $data['refund_amount'];
+        $deductionPerMinute = 1; 
 
-        // update refund fields
+        $minutesUsed = $booking->refund_minutes_used;
+        $deduction   = $booking->refund_deduction;
+
+        if ($minutesUsed === null || $deduction === null) {
+            $now   = now();
+            $start = $booking->updated_at ?? $booking->pickup_datetime;
+
+            $minutesUsed = 0;
+            if ($start && $now->gt($start)) {
+                $minutesUsed = $start->diffInMinutes($now);
+            }
+
+            $deduction = $minutesUsed * $deductionPerMinute;
+        }
+
+        $refundAmount = $booking->refund_amount ?? max(0, $paidAmount - $deduction);
+
         $booking->refund_status = 'approved';
         $booking->refund_amount = $refundAmount;
-
-        // mark payment as refunded (business choice)
-        $booking->payment_status = 'Refunded';
-        // optional: cancel & free vehicle
         $booking->booking_status = 'Cancelled';
+
         if ($booking->vehicle) {
             $booking->vehicle->availability = true;
             $booking->vehicle->save();
         }
 
+        $booking->refund_minutes_used = $minutesUsed;
+        $booking->refund_deduction    = $deduction;
+
         $booking->save();
 
-        // TODO: actually send money back via payment gateway, or mark in finance system
-
-        return back()->with('success', 'Refund approved and booking cancelled.');
+        return back()->with(
+            'success',
+            'Refund approved. Customer will receive ₱' . number_format($refundAmount, 2) .
+            " ({$minutesUsed} minutes used, deduction ₱" . number_format($deduction, 2) . ")."
+        );
     }
 
     public function rejectRefund(Booking $booking)
@@ -207,5 +256,12 @@ public function confirm(Booking $booking)
         $booking->save();
 
         return back()->with('success', 'Refund request rejected.');
+    }
+
+    public function show(string $booking_id)
+    {
+        $booking = Booking::with(['user', 'vehicle'])->where('booking_id', $booking_id)->firstOrFail();
+
+        return view('layouts.authorities.showBookings', compact('booking'));
     }
 }

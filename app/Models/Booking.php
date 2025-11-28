@@ -5,6 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property int|null $refund_minutes_used
+ * @property float|null $refund_deduction
+ * @property float|null $refund_amount
+ */
+
 class Booking extends Model
 {
     use SoftDeletes;
@@ -31,7 +37,11 @@ class Booking extends Model
         'payer_name',
         'payer_number',
         'receipt_screenshot',
-        // DO NOT add paid_amount here, it's computed only
+        'refund_status',
+        'refund_amount',
+        'refund_requested_at',
+        'refund_minutes_used',
+        'refund_deduction',
     ];
 
     protected $casts = [
@@ -39,6 +49,9 @@ class Booking extends Model
         'pickup_datetime'  => 'datetime',
         'return_datetime'  => 'datetime',
         'payment_meta'     => 'array',
+        'refund_minutes_used' => 'integer',
+        'refund_deduction'    => 'decimal:2',
+        'refund_amount'       => 'decimal:2',
     ];
 
     public const ACTIVE_STATUSES = [

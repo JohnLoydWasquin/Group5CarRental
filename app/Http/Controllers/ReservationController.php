@@ -6,6 +6,7 @@ use App\Models\Booking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+
 class ReservationController extends Controller
 {
     /**
@@ -66,7 +67,8 @@ class ReservationController extends Controller
             ? $booking->security_deposit
             : $booking->total_amount;
 
-        // Basic payment info
+        $booking->paid_amount   = (float) $expectedAmount;
+
         $booking->payer_name     = $data['payer_name'];
         $booking->payer_number   = $data['payer_number'];
         $booking->payment_method = 'GCash';              
@@ -120,16 +122,36 @@ class ReservationController extends Controller
             abort(403);
         }
 
+        $paidAmount = (float) ($booking->paid_amount ?? 0);
+
         if (
-            ! in_array($booking->booking_status, ['Payment Submitted','Confirmed','Ongoing']) ||
-            $booking->payment_status !== 'Paid' ||
-            now()->gte($booking->pickup_datetime)
+            ! in_array($booking->booking_status, ['Payment Submitted', 'Confirmed', 'Ongoing']) ||
+            $paidAmount <= 0 ||
+            in_array($booking->refund_status, ['pending', 'approved'])
         ) {
             return back()->with('error', 'This booking is not eligible for a refund.');
         }
 
-        $booking->booking_status = 'Refund Requested';
-        $booking->payment_status = 'Refund Pending';
+        $startForRefund = $booking->updated_at ?? $booking->pickup_datetime;
+
+        $now         = now();
+        $minutesUsed = 0;
+
+        if ($startForRefund && $now->gt($startForRefund)) {
+            $minutesUsed = $startForRefund->diffInMinutes($now);
+        }
+
+        $ratePerMinute = 1; 
+        $deduction     = $minutesUsed * $ratePerMinute;
+
+        $refundAmount  = max(0, $paidAmount - $deduction);
+        
+        $booking->refund_status        = 'pending';
+        $booking->refund_requested_at  = $now;
+        $booking->refund_minutes_used  = $minutesUsed;
+        $booking->refund_deduction     = $deduction;
+        $booking->refund_amount        = $refundAmount;
+
         $booking->save();
 
         return back()->with('success', 'Refund request submitted. Our staff will review it shortly.');

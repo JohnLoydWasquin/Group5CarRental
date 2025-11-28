@@ -21,6 +21,8 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\KycController;
 use App\Http\Controllers\AdminKycController;
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\AdminReviewController;
 
 // Navigator
 Route::get('/', function () {return view('layouts.pages.home');})->name('home');
@@ -106,6 +108,8 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     ->name('admin.bookings.refund.approve');
     Route::post('/admin/bookings/{booking}/refund-reject', [AdminBookingController::class, 'rejectRefund'])
     ->name('admin.bookings.refund.reject');
+    Route::get('/admin/bookings/{booking_id}', [AdminBookingController::class, 'show'])
+    ->name('admin.bookings.show');
 });
 
 //Admin staff management
@@ -154,3 +158,16 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::post('/verifications/{submission}/approve', [AdminKycController::class, 'approve'])->name('admin.kyc.approve');
     Route::post('/verifications/{submission}/reject', [AdminKycController::class, 'reject'])->name('admin.kyc.reject');
 });
+
+// Review customer
+Route::middleware(['auth'])->group(function () {
+    Route::get('/rate-us', [ReviewController::class, 'index'])->name('rateus.index');
+    Route::post('/rate-us', [ReviewController::class, 'store'])->name('rateus.store');
+});
+
+// Review admin
+Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
+        Route::get('/reviews', [AdminReviewController::class, 'index'])->name('admin.reviews.index');
+        Route::post('/reviews/{review}/approve', [AdminReviewController::class, 'approve'])->name('admin.reviews.approve');
+        Route::post('/reviews/{review}/reject',  [AdminReviewController::class, 'reject'])->name('reviews.reject');
+    });

@@ -32,6 +32,8 @@
                         <th>Vehicle</th>
                         <th>Pickup → Return</th>
                         <th>Status</th>
+                        {{-- NEW: Time Used column --}}
+                        <th>Time Used</th>
                         <th>Total</th>
                         <th>Actions</th>
                     </tr>
@@ -42,14 +44,29 @@
                         $paidAmount = $booking->paid_amount ?? 0;
                         $balanceDue = max(0, $booking->total_amount - $paidAmount);
 
-                        // ⭐ NEW: simple rule when user can request a refund:
-                        // - booking is already paid
-                        // - status is Payment Submitted / Confirmed / Ongoing
-                        // - current time is still BEFORE pickup time
                         $now = \Carbon\Carbon::now();
-                        $canRequestRefund = in_array($booking->booking_status, ['Payment Submitted','Confirmed','Ongoing'])
-                            && $booking->payment_status === 'Paid'
-                            && $now->lt($booking->pickup_datetime);
+                        $hasAnyPayment = ($booking->paid_amount ?? 0) > 0;
+
+                        $canRequestRefund =
+                            $hasAnyPayment &&
+                            in_array($booking->booking_status, ['Payment Submitted','Confirmed','Ongoing']) &&
+                            ! in_array($booking->refund_status, ['pending', 'approved']);
+
+                        // NEW: decide if we show a running timer
+                        $showTimer = in_array($booking->booking_status, ['Confirmed','Ongoing','Completed']);
+
+                        // 🔹 NEW: choose start time for the timer
+                        // - For Confirmed/Ongoing, start from updated_at (when admin changed status)
+                        // - Otherwise fall back to pickup_datetime
+                        $timerStartTs = null;
+                        if ($showTimer) {
+                            if (in_array($booking->booking_status, ['Confirmed', 'Ongoing'])) {
+                                $timerStartTs = ($booking->updated_at ?? $booking->pickup_datetime)->timestamp;
+                            } else {
+                                // e.g. Completed
+                                $timerStartTs = $booking->pickup_datetime->timestamp;
+                            }
+                        }
                     @endphp
 
                     <tr>
@@ -73,6 +90,23 @@
                             @endphp
                             <span class="badge {{ $badgeClass }}">{{ $status }}</span>
                         </td>
+
+                        {{-- NEW: Time Used cell --}}
+                        <td>
+                            @if($showTimer && $timerStartTs)
+                                <span
+                                    class="time-used"
+                                    data-start="{{ $timerStartTs }}"
+                                    data-end="{{ $booking->return_datetime ? $booking->return_datetime->timestamp : '' }}"
+                                    data-status="{{ $booking->booking_status }}"
+                                >
+                                    0s
+                                </span>
+                            @else
+                                —
+                            @endif
+                        </td>
+
                         <td>₱{{ number_format($booking->total_amount, 2) }}</td>
 
                         {{-- ✅ SINGLE TD FOR ACTIONS (no nested <td>) --}}
@@ -244,7 +278,7 @@
                                                 </div>
                                             </div>
 
-                                            {{-- Valid ID (optional) --}}
+                                            {{-- Valid ID --}}
                                             <div class="mb-3">
                                                 <label class="form-label">Upload Valid ID (optional)</label>
                                                 <input type="file"
@@ -393,4 +427,64 @@
 
     @endif
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const timers = document.querySelectorAll('.time-used');
+
+        timers.forEach(function (el) {
+            const status = el.dataset.status;
+            const startTs = parseInt(el.dataset.start, 10);    
+            const endTs   = el.dataset.end ? parseInt(el.dataset.end, 10) : null;
+
+            if (!startTs) {
+                el.textContent = '0s';
+                return;
+            }
+
+            function formatDuration(sec) {
+                if (sec < 0) sec = 0;
+                const h = Math.floor(sec / 3600);
+                const m = Math.floor((sec % 3600) / 60);
+                const s = sec % 60;
+
+                const parts = [];
+                if (h > 0) parts.push(h + 'h');
+                if (m > 0 || h > 0) parts.push(m.toString().padStart(2, '0') + 'm');
+                parts.push(s.toString().padStart(2, '0') + 's');
+                return parts.join(' ');
+            }
+
+            function update() {
+                const nowMs   = Date.now();
+                const startMs = startTs * 1000;
+                const endMs   = endTs ? endTs * 1000 : null;
+
+                let effectiveNow = nowMs;
+
+                if (endMs && nowMs > endMs) {
+                    effectiveNow = endMs;
+                }
+
+                let diffSec = Math.floor((effectiveNow - startMs) / 1000);
+                if (diffSec < 0) diffSec = 0; 
+                el.textContent = formatDuration(diffSec);
+
+                if (status === 'Completed' || (endMs && nowMs > endMs)) {
+                    return false;
+                }
+                return true;
+            }
+
+            let keepGoing = update();
+
+            if (keepGoing) {
+                const intervalId = setInterval(function () {
+                    const still = update();
+                    if (!still) clearInterval(intervalId);
+                }, 1000);
+            }
+        });
+    });
+</script>
 @endsection

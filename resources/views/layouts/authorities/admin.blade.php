@@ -64,6 +64,11 @@
                         {{ ($chatUnreadCount ?? 0) > 9 ? '9+' : ($chatUnreadCount ?? 0) }}
                     </span>
                 </a>
+                <a href="{{ route('admin.reviews.index') }}"
+                class="flex items-center gap-3 px-4 py-2 rounded hover:bg-gray-800">
+                    <i data-lucide="star" class="w-5 h-5"></i>
+                    <span>Reviews</span>
+                </a>
                 <a href="{{ route('reports.index') }}" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-gray-800">
                     <i data-lucide="file-bar-chart" class="w-5 h-5"></i>
                     <span>Generate Report</span>

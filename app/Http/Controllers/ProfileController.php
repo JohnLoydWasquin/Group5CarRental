@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use App\Models\Review;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use App\Models\KycSubmission;
 
 class ProfileController extends Controller
 {
@@ -16,20 +18,26 @@ class ProfileController extends Controller
         $bookings = $user->bookings()->with('vehicle')->get();
 
         $totalBookings = $bookings->count();
-        $totalSpent = $bookings->sum('total_amount');
-        $averageRating = null;
+        $totalSpent    = $bookings->sum('total_amount');
+
+        $averageRating = Review::where('user_id', $user->id)
+            ->where('status', 'approved')   
+            ->avg('rating');
+
+        $averageRating = $averageRating ? round($averageRating, 1) : null;
 
         $kyc = $user->kycSubmission;
 
         return view('layouts.userProfile.profile', compact(
-        'bookings',
-        'totalBookings',
-        'totalSpent',
-        'averageRating',
-        'user',
-        'kyc'
-    ));
-}
+            'bookings',
+            'totalBookings',
+            'totalSpent',
+            'averageRating',
+            'user',
+            'kyc'
+        ));
+    }
+
 
     public function upload(Request $request)
     {

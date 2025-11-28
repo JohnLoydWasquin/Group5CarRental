@@ -1,6 +1,60 @@
 @extends('layouts.app')
 
 @section('content')
+<style>
+#vehicles {
+  background: radial-gradient(circle at top left, #1f2933 0, #020617 55%, #020617 100%);
+}
+
+.service-card {
+  position: relative;
+  border-radius: 1.5rem;
+  padding: 2rem 2rem 2.25rem;
+  color: #fff;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.service-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.service-icon-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+}
+
+.service-icon-badge i {
+  font-size: 1.4rem;
+  color: #ffffff;
+}
+
+.service-card--blue {
+  background: linear-gradient(135deg, #22d3ee, #1d4ed8);
+}
+
+.service-card--pink {
+  background: linear-gradient(135deg, #ec4899, #7c3aed);
+}
+
+.service-card--green {
+  background: linear-gradient(135deg, #22c55e, #0f766e);
+}
+
+.service-card--purple {
+  background: linear-gradient(135deg, #6366f1, #0f172a);
+}
+</style>
 <section class="hero hero-center" data-aos="fade-left">
     <div class="container">
         <div class="row align-items-center">
@@ -90,105 +144,68 @@
         </div>
     </div>
 </section>
-<section id="vehicles" class="bg-dark text-center py-5 mb-0">
+<section id="vehicles" class="bg-dark py-5 mb-0">
   <div class="container">
     <div class="text-center mb-5">
-      <h2 class="fw-bold display-5 text-white">Our Fleet</h2>
-      <p class="text-secondary fs-5">
-        Choose from our wide selection of well-maintained vehicles for every occasion.
+      <h2 class="fw-bold display-5 text-white">Our Services</h2>
+      <p class="text-secondary fs-5 mb-0">
+        Choose from our wide range of professional transportation solutions tailored to your needs.
       </p>
     </div>
 
+    @php
+      $services = [
+        [
+          'title'       => 'Self-Drive Car Rental',
+          'tag'         => 'Self-Drive',
+          'icon'        => 'bi-car-front',
+          'description' => 'Rent a car and drive on your own. Ideal for personal trips, errands, and business travel.',
+          'class'       => 'service-card--blue',
+        ],
+        [
+          'title'       => 'Driver Service',
+          'tag'         => 'With Driver',
+          'icon'        => 'bi-person-badge',
+          'description' => 'Enjoy a professional, courteous driver for a safer and more comfortable ride.',
+          'class'       => 'service-card--pink',
+        ],
+        [
+          'title'       => 'Airport Pick-up & Drop-off',
+          'tag'         => 'Airport Service',
+          'icon'        => 'bi-geo-alt',
+          'description' => 'On-time airport transfers so you never miss a flight and always arrive stress-free.',
+          'class'       => 'service-card--green',
+        ],
+        [
+          'title'       => 'Long-Term Leasing',
+          'tag'         => 'Leasing',
+          'icon'        => 'bi-calendar-event',
+          'description' => 'Flexible weekly or monthly options for individuals and companies needing vehicles longer term.',
+          'class'       => 'service-card--purple',
+        ],
+      ];
+    @endphp
+
     <div class="row g-4">
-      @php
-        $vehicles = [
-          [
-            'name' => 'Ford Mustang GT',
-            'category' => 'Sports Car',
-            'image' => 'images/Ford Mustang GT.jpg',
-            'price' => '₱5,500',
-            'passengers' => 4,
-            'transmission' => 'Automatic',
-            'fuel' => 'Gasoline',
-            'available' => true,
-          ],
-          [
-            'name' => 'Toyota Fortuner',
-            'category' => 'SUV',
-            'image' => 'images/Toyota Fortuner.jpg',
-            'price' => '₱3,800',
-            'passengers' => 7,
-            'transmission' => 'Automatic',
-            'fuel' => 'Diesel',
-            'available' => true,
-          ],
-          [
-            'name' => 'Honda Civic',
-            'category' => 'Sedan',
-            'image' => 'images/Ford Mustang GT.jpg',
-            'price' => '₱2,500',
-            'passengers' => 5,
-            'transmission' => 'Automatic',
-            'fuel' => 'Gasoline',
-            'available' => true,
-          ],
-          [
-            'name' => 'Mitsubishi Xpander',
-            'category' => 'MPV',
-            'image' => 'images/Mitsubishi Xpander.jpg',
-            'price' => '₱2,800',
-            'passengers' => 7,
-            'transmission' => 'Automatic',
-            'fuel' => 'Gasoline',
-            'available' => false,
-          ],
-        ];
-      @endphp
-
-      @foreach ($vehicles as $vehicle)
-        <div class="col-md-6 col-lg-3">
-          <div class="card h-100 shadow-sm border-0 bg-black text-light">
-            <div class="position-relative">
-              <img src="{{ asset($vehicle['image']) }}" class="card-img-top" alt="{{ $vehicle['name'] }}">
-              @if ($vehicle['available'])
-                <span class="badge bg-success position-absolute top-0 end-0 m-2">Available</span>
-              @else
-                <span class="badge bg-secondary position-absolute top-0 end-0 m-2">Booked</span>
-              @endif
-            </div>
-
-            <div class="card-body text-light">
-              <p class="text-muted small mb-1">{{ $vehicle['category'] }}</p>
-              <h5 class="fw-bold mb-3">{{ $vehicle['name'] }}</h5>
-
-              <div class="d-flex justify-content-between text-muted small mb-3">
-                <div><i class="bi bi-people"></i> {{ $vehicle['passengers'] }}</div>
-                <div><i class="bi bi-gear"></i> {{ $vehicle['transmission'] }}</div>
-                <div><i class="bi bi-fuel-pump"></i> {{ $vehicle['fuel'] }}</div>
-              </div>
-
-              <div class="d-flex align-items-baseline gap-1">
-                <h4 class="text-warning fw-bold mb-0">{{ $vehicle['price'] }}</h4>
-                <span class="text-muted">/day</span>
+      @foreach ($services as $service)
+        <div class="col-md-6">
+          <div class="service-card {{ $service['class'] }}">
+            <div class="d-flex justify-content-between align-items-start mb-4">
+              <span class="badge rounded-pill bg-light bg-opacity-10 text-uppercase small fw-semibold px-3 py-2">
+                {{ $service['tag'] }}
+              </span>
+              <div class="service-icon-badge">
+                <i class="bi {{ $service['icon'] }}"></i>
               </div>
             </div>
 
-            <div class="card-footer bg-transparent border-0">
-              @if ($vehicle['available'])
-                <a href="{{ route('vehicles', ['vehicle' => urlencode($vehicle['name'])]) }}" class="btn btn-primary w-100 fw-bold">
-                  Book Now
-                </a>
-              @else
-                <button class="btn btn-secondary w-100 fw-bold" disabled>Currently Unavailable</button>
-              @endif
-            </div>
+            <h3 class="h4 fw-bold mb-2 text-white">{{ $service['title'] }}</h3>
+            <p class="mb-4 text-white-50">
+              {{ $service['description'] }}
+            </p>
           </div>
         </div>
       @endforeach
-    </div>
-
-    <div class="text-center mt-5">
-      <a href="{{ url('/vehicles') }}" class="btn btn-view-all">View All Vehicles</a>
     </div>
   </div>
 </section>
