@@ -2,16 +2,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-    .fade { transition: opacity 0.8s ease-in-out; }
-    .password-hint {
-      display: none;
-      background: #f9f9f9;
-      border-radius: 0.5rem;
-      padding: 1rem;
-      margin-top: 0.5rem;
-      border: 1px solid #ddd;
-    }
-  </style>
+        .fade { transition: opacity 0.8s ease-in-out; }
+        .password-hint {
+            display: none;
+            background: #f9f9f9;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            border: 1px solid #ddd;
+        }
+    </style>
 </head>
 
 @extends('layouts.authorities.admin')
@@ -85,15 +85,15 @@
                     <div id="passwordHint" class="password-hint shadow">
                         <p class="mb-2 font-semibold">Password must include:</p>
                         <ul class="text-sm space-y-1">
-                        <li id="lenRule"><i class="fa-solid fa-xmark text-red-500 mr-2"></i>8-20 <strong>characters</strong></li>
-                        <li id="upperRule"><i class="fa-solid fa-xmark text-red-500 mr-2"></i>At least one <strong>capital letter</strong></li>
-                        <li id="numRule"><i class="fa-solid fa-xmark text-red-500 mr-2"></i>At least one <strong>number</strong></li>
-                        <li id="spaceRule"><i class="fa-solid fa-xmark text-red-500 mr-2"></i><strong>No spaces</strong></li>
+                            <li id="lenRule"><i class="fa-solid fa-xmark text-red-500 mr-2"></i>8-20 <strong>characters</strong></li>
+                            <li id="upperRule"><i class="fa-solid fa-xmark text-red-500 mr-2"></i>At least one <strong>capital letter</strong></li>
+                            <li id="numRule"><i class="fa-solid fa-xmark text-red-500 mr-2"></i>At least one <strong>number</strong></li>
+                            <li id="spaceRule"><i class="fa-solid fa-xmark text-red-500 mr-2"></i><strong>No spaces</strong></li>
                         </ul>
                     </div>
-                    </div>
+                </div>
 
-                    <div class="relative">
+                <div class="relative">
                     <label class="block text-gray-700 mb-1 font-semibold">Confirm Password</label>
                     <input type="password" id="password_confirmation" name="password_confirmation" required
                         class="w-full border-gray-300 rounded-lg p-3 border focus:ring-green-500 focus:border-green-500 pr-10">
@@ -101,7 +101,7 @@
                         class="absolute right-3 top-12 text-gray-500 hover:text-gray-700">
                         <i class="fa-solid fa-eye"></i>
                     </button>
-                    </div>
+                </div>
 
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
@@ -155,11 +155,30 @@
                             <td class="px-6 py-3">{{ $member->phone }}</td>
                             <td class="px-6 py-3 capitalize">{{ $member->role }}</td>
                             <td class="px-6 py-3 flex justify-center gap-3">
-                                <a href="#" class="px-3 py-1.5 text-xs bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200">Edit</a>
-                                <form action="{{ route('admin.staff.destroy', $member->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this staff/admin?')">
+                                {{-- OPEN EDIT MODAL --}}
+                                <button
+                                    type="button"
+                                    class="px-3 py-1.5 text-xs bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 btn-edit-staff"
+                                    data-id="{{ $member->id }}"
+                                    data-name="{{ $member->name }}"
+                                    data-email="{{ $member->email }}"
+                                    data-phone="{{ $member->phone }}"
+                                    data-address="{{ $member->address }}"
+                                    data-role="{{ $member->role }}"
+                                    data-action="{{ route('admin.staff.update', $member->id) }}"
+                                >
+                                    Edit
+                                </button>
+
+                                {{-- DELETE (existing logic kept) --}}
+                                <form action="{{ route('admin.staff.destroy', $member->id) }}" method="POST"
+                                    onsubmit="return confirm('Are you sure you want to delete this staff/admin?')">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="px-3 py-1.5 text-xs bg-red-100 text-red-600 rounded-lg hover:bg-red-200">Delete</button>
+                                    <button type="submit"
+                                        class="px-3 py-1.5 text-xs bg-red-100 text-red-600 rounded-lg hover:bg-red-200">
+                                        Delete
+                                    </button>
                                 </form>
                             </td>
                         </tr>
@@ -178,14 +197,150 @@
             </div>
         @endif
     </div>
+
+    {{-- EDIT STAFF MODAL (new, but uses existing update route) --}}
+    <div id="editModal"
+         class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg">
+                <div class="flex items-center justify-between px-6 py-4 border-b">
+                    <h2 class="text-lg font-semibold text-gray-800">Edit Staff / Admin</h2>
+                    <button type="button"
+                            class="text-gray-400 hover:text-gray-600"
+                            data-edit-close>
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <form id="editForm" method="POST" class="px-6 py-5 space-y-5">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                            <input type="text" id="edit_name" name="name" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" id="edit_email" name="email" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                            <input type="text" id="edit_phone" name="phone" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                            <input type="text" id="edit_address" name="address" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                            <select id="edit_role" name="role"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+                                <option value="staff">Staff</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-4">
+                        <button type="button"
+                                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200"
+                                data-edit-close>
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                class="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700">
+                            Save changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script>
-document.getElementById('searchForm').addEventListener('submit', function() {
-    setTimeout(() => {
-        document.querySelector('#staffList').scrollIntoView({ behavior: 'smooth' });
-    }, 100);
+document.addEventListener('DOMContentLoaded', function () {
+    const searchForm = document.getElementById('searchForm');
+    if (searchForm) {
+        searchForm.addEventListener('submit', function () {
+            setTimeout(() => {
+                const staffList = document.querySelector('#staffList');
+                if (staffList) {
+                    staffList.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 100);
+        });
+    }
+
+    const editModal    = document.getElementById('editModal');
+    const editForm     = document.getElementById('editForm');
+    const nameInput    = document.getElementById('edit_name');
+    const emailInput   = document.getElementById('edit_email');
+    const phoneInput   = document.getElementById('edit_phone');
+    const addressInput = document.getElementById('edit_address');
+    const roleSelect   = document.getElementById('edit_role');
+
+    const openButtons  = document.querySelectorAll('.btn-edit-staff');
+    const closeButtons = editModal.querySelectorAll('[data-edit-close]');
+
+    function openEditModal() {
+        editModal.classList.remove('hidden');
+        editModal.classList.add('flex');
+    }
+
+    function closeEditModal() {
+        editModal.classList.add('hidden');
+        editModal.classList.remove('flex');
+    }
+
+    openButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const action  = btn.dataset.action;
+            const name    = btn.dataset.name;
+            const email   = btn.dataset.email;
+            const phone   = btn.dataset.phone;
+            const address = btn.dataset.address;
+            const role    = btn.dataset.role;
+
+            editForm.action    = action;
+            nameInput.value    = name;
+            emailInput.value   = email;
+            phoneInput.value   = phone;
+            addressInput.value = address ?? '';
+            roleSelect.value   = role;
+
+            openEditModal();
+        });
+    });
+
+    closeButtons.forEach(btn => {
+        btn.addEventListener('click', closeEditModal);
+    });
+
+    editModal.addEventListener('click', (e) => {
+        if (e.target === editModal) {
+            closeEditModal();
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !editModal.classList.contains('hidden')) {
+            closeEditModal();
+        }
+    });
 });
 </script>
+
 <script src="{{ asset('js/auth.js') }}"></script>
 @endsection

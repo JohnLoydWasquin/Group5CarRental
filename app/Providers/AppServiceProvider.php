@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Chat;
+use App\Models\Booking;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -27,7 +28,17 @@ class AppServiceProvider extends ServiceProvider
                         ->count();
                 }
 
+                $activeBookingsCount = 0;
+
+                if (Auth::check() && Auth::user()->role === 'admin') {
+                    $activeBookingsCount = Booking::whereIn(
+                        'booking_status',
+                        Booking::ACTIVE_STATUSES
+                    )->count();
+                }
+
                 $view->with('chatUnreadCount', $unreadCount);
+                $view->with('activeBookingsCount', $activeBookingsCount);
             }
         );
     }

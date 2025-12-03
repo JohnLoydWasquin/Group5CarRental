@@ -26,7 +26,6 @@ use App\Http\Controllers\AdminReviewController;
 
 // Navigator
 Route::get('/', function () {return view('layouts.pages.home');})->name('home');
-// Route::get('/vehicles', function () {return view('layouts.pages.vehicles');})->name('vehicles');
 Route::get('/vehicles', [VehicleController::class, 'index'])->name('vehicles');
 Route::get('/about', function () {return view('layouts.pages.about');})->name('about');
 Route::get('/contact', function () {return view('layouts.pages.contact');})->name('contact');
@@ -46,7 +45,7 @@ Route::post('/verify-otp', [ForgotPasswordController::class, 'verifyOtp'])->name
 Route::get('/reset-password', [ForgotPasswordController::class, 'showResetPassword'])->name('reset_password');
 Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword'])->name('reset_password');
 
-//Users Profile
+// Users Profile
 Route::middleware('auth')->group(function (){
 Route::get('/profile', [ProfileController::class, 'index'])->middleware('auth')->name('profile');
 Route::post('/profile/upload', [ProfileController::class, 'upload'])->name('profile.upload');
@@ -55,10 +54,10 @@ Route::get('/userBooking', [BookingController::class, 'index'])->name('userBooki
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 });
 
-//Contact Message
+// Contact Message
 Route::post('/contact/send', [ContactController::class,'sendMessage'])->name('contact_send');
 
-//Booking & Payment Routes (Only for logged-in users)
+// Booking & Payment Routes (Only for logged-in users)
 Route::middleware(['auth'])->group(function () {
     Route::post('/vehicles', [BookingController::class, 'store'])->name('vehicles.store');
     Route::post('/booking/payment', [BookingController::class, 'submitPayment'])->name('booking.payment');
@@ -73,12 +72,12 @@ Route::middleware(['auth'])->group(function () {
         ->name('reservations.refundRequest');
 });
 
-//Admin routing
+// Admin routing
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
 });
 
-//Admin Customers data
+// Admin Customers data
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/customers', [AdminCustomerController::class, 'index'])->name('admin.customers');
     Route::get('/admin/customers/search', [AdminCustomerController::class, 'search'])->name('admin.customers.search');
@@ -112,16 +111,17 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     ->name('admin.bookings.show');
 });
 
-//Admin staff management
+// Admin staff management
 Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/staff', [AdminStaffController::class, 'index'])->name('admin.staff.index');
     Route::get('/staff/create', [AdminStaffController::class, 'create'])->name('admin.staff.create');
+    Route::get('/staff/{id}/edit', [AdminStaffController::class, 'edit'])->name('admin.staff.edit');
     Route::post('/staff', [AdminStaffController::class, 'store'])->name('admin.staff.store');
     Route::put('/staff/{id}', [AdminStaffController::class, 'update'])->name('admin.staff.update');
     Route::delete('/staff/{id}', [AdminStaffController::class, 'destroy'])->name('admin.staff.destroy');
 });
 
-//Staff routes
+// Staff routes
 Route::middleware(['auth', 'role:staff'])->group(function () {
     Route::get('/staff/dashboard', [StaffController::class, 'index'])->name('staff.dashboard');
     Route::get('/staff/customers', [StaffCustomerController::class, 'index'])->name('staff.customers');
@@ -130,7 +130,7 @@ Route::middleware(['auth', 'role:staff'])->group(function () {
     Route::get('/staff/vehicles',[StaffVehicleController::class, 'index'])->name('staff.vehicles.index');
 });
 
-//Staff/Admin Chatting system
+// Staff/Admin Chatting system
 Route::middleware(['auth'])->group(function () {
     Route::get('/chat/{userId}', [ChatController::class, 'index'])->name('chat.index');
     Route::post('/chat/send', [ChatController::class, 'send'])->name('chat.send');
@@ -139,7 +139,7 @@ Route::middleware(['auth'])->group(function () {
     // Route::delete('/chat/delete/{id}', [ChatController::class, 'delete'])->name('chat.delete');
 });
 
-//Staff/Admin Generating report
+// Staff/Admin Generating report
 Route::middleware(['auth'])->group(function () {
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');

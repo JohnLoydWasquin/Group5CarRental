@@ -17,6 +17,9 @@ class ProfileController extends Controller
 
         $bookings = $user->bookings()->with('vehicle')->get();
 
+        $bookingsQuery = $user->bookings()->with('vehicle')->latest();
+        $bookings = $bookingsQuery->paginate(3);
+
         $totalBookings = $bookings->count();
         $totalSpent    = $bookings->sum('total_amount');
 

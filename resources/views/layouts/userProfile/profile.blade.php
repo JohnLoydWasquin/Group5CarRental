@@ -115,14 +115,67 @@ body { background-color: #e6eaf0ff; }
                         </div>
                         <div class="col-md-2 text-end">
                             <span class="badge bg-success px-3 py-2">{{ ucfirst($booking->booking_status) }}</span>
-                            <br>
-                            <a href="#" class="btn btn-outline-primary btn-sm mt-2">View Details</a>
                         </div>
                     </div>
                 </div>
             @empty
                 <p class="mt-4">No bookings found.</p>
             @endforelse
+            @if($bookings->hasPages())
+                <div class="mt-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+
+                    {{-- Left: "Showing X–Y of Z rentals" --}}
+                    <div class="text-muted small">
+                        Showing
+                        <span class="fw-semibold">{{ $bookings->firstItem() }}</span>
+                        –
+                        <span class="fw-semibold">{{ $bookings->lastItem() }}</span>
+                        of
+                        <span class="fw-semibold">{{ $bookings->total() }}</span>
+                        rentals
+                    </div>
+
+                    {{-- Right: pagination links with compact spacing --}}
+                    <nav aria-label="Rental history pages">
+                        <ul class="pagination mb-0">
+                            {{-- Previous --}}
+                            @if ($bookings->onFirstPage())
+                                <li class="page-item disabled">
+                                    <span class="page-link">&laquo;</span>
+                                </li>
+                            @else
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ $bookings->previousPageUrl() }}" rel="prev">&laquo;</a>
+                                </li>
+                            @endif
+
+                            {{-- Page numbers --}}
+                            @foreach ($bookings->getUrlRange(1, $bookings->lastPage()) as $page => $url)
+                                @if ($page == $bookings->currentPage())
+                                    <li class="page-item active" aria-current="page">
+                                        <span class="page-link">{{ $page }}</span>
+                                    </li>
+                                @else
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ $url }}">{{ $page }}</a>
+                                    </li>
+                                @endif
+                            @endforeach
+
+                            {{-- Next --}}
+                            @if ($bookings->hasMorePages())
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ $bookings->nextPageUrl() }}" rel="next">&raquo;</a>
+                                </li>
+                            @else
+                                <li class="page-item disabled">
+                                    <span class="page-link">&raquo;</span>
+                                </li>
+                            @endif
+                        </ul>
+                    </nav>
+                </div>
+            @endif
         </div>
 
         <div class="tab-pane fade" id="verify">
@@ -218,8 +271,6 @@ body { background-color: #e6eaf0ff; }
               <div class="invalid-feedback">{{ $message }}</div>
             @enderror
           </div>
-
-          {{-- Optional: allow email change too --}}
           {{-- 
           <div class="mb-3">
             <label class="form-label">Email</label>

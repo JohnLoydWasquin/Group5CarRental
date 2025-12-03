@@ -32,9 +32,16 @@ class AdminStaffController extends Controller
     }
 
 
-    public function create()
+    public function create(Request $request)
     {
-        return view('layouts.authorities.createStaff');
+        return $this->index($request);
+    }
+
+    public function edit($id)
+    {
+        $staff = User::whereIn('role', ['admin', 'staff'])->findOrFail($id);
+
+        return view('layouts.authorities.editStaff', compact('staff'));
     }
 
     public function store(Request $request)

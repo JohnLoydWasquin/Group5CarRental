@@ -7,11 +7,25 @@ use Illuminate\Http\Request;
 
 class AdminReviewController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $reviews = Review::with('user')->latest()->paginate(15);
+        $reviews = Review::with('user')
+            ->latest()
+            ->paginate(15);
 
-        return view('layouts.authorities.reviewIndex', compact('reviews'));
+        $averageRating = Review::where('status', 'approved')->avg('rating');
+        $totalReviews  = Review::where('status', 'approved')->count();
+
+        $approvedCount = Review::where('status', 'approved')->count();
+        $pendingCount  = Review::where('status', 'pending')->count();
+
+        return view('layouts.authorities.reviewIndex', compact(
+            'reviews',
+            'averageRating',
+            'totalReviews',
+            'approvedCount',
+            'pendingCount'
+        ));
     }
 
     public function approve(Review $review)

@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&display=swap">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="icon" type="image/jpeg" href="{{ asset('images/favicon.jpg') }}">
 </head>
 
 <body class="bg-gray-100 text-gray-800">
@@ -39,9 +40,21 @@
                     <i data-lucide="car" class="w-5 h-5"></i>
                     <span>Car Inventory</span>
                 </a>
-                <a href="{{ route('admin.bookings') }}" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-gray-800">
-                    <i data-lucide="calendar" class="w-5 h-5"></i>
-                    <span>Bookings</span>
+                <a href="{{ route('admin.bookings') }}"
+                class="flex items-center justify-between px-4 py-2 rounded hover:bg-gray-800">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="calendar" class="w-5 h-5"></i>
+                        <span>Bookings</span>
+                    </div>
+
+                    <span
+                        id="bookingActiveBadge"
+                        data-count="{{ $activeBookingsCount ?? 0 }}"
+                        class="@if(($activeBookingsCount ?? 0) == 0) hidden @else flex @endif
+                            items-center justify-center w-5 h-5 text-xs font-bold
+                            bg-red-500 text-white rounded-full">
+                        {{ ($activeBookingsCount ?? 0) > 9 ? '9+' : ($activeBookingsCount ?? 0) }}
+                    </span>
                 </a>
                 <a href="{{ route('admin.staff.index') }}" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-gray-800">
                     <i data-lucide="user-cog" class="w-5 h-5"></i>
