@@ -474,7 +474,7 @@ document.addEventListener("DOMContentLoaded", () => {
             Swal.fire({ icon: 'error', title: 'Booking Error', text: 'Something went wrong. Please try again.' });
         }
     }
-        // ⭐ NEW: HANDLE "PAY NOW" FROM RESERVATIONS
+        // NEW: HANDLE "PAY NOW" FROM RESERVATIONS
     document.querySelectorAll('.payNowBtn').forEach(btn => {
         btn.addEventListener('click', function () {
             const vehicleId = this.dataset.vehicleId;

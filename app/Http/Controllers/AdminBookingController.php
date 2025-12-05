@@ -38,7 +38,7 @@ class AdminBookingController extends Controller
 
         if ($isBalancePayment) {
 
-            // 🔹 User just paid the remaining balance
+            // User just paid the remaining balance
             $booking->payment_status = 'Paid';
 
             if (($booking->paid_amount ?? 0) < $booking->total_amount) {
@@ -51,11 +51,9 @@ class AdminBookingController extends Controller
 
         } elseif ($isReservationDeposit) {
 
-            // 🔹 First payment = deposit only
-            $booking->booking_status = 'Confirmed';  // reservation is now confirmed
-            $booking->payment_status = 'Paid';       // deposit paid
+            $booking->booking_status = 'Confirmed';  
+            $booking->payment_status = 'Paid';      
 
-            // make sure we only count the deposit as paid
             if (($booking->paid_amount ?? 0) < $booking->security_deposit) {
                 $booking->paid_amount = $booking->security_deposit;
             }
@@ -66,7 +64,7 @@ class AdminBookingController extends Controller
             }
 
         } else {
-            // 🔹 Book Now with full payment OR reservation with full payment
+
             $booking->booking_status = 'Confirmed';
             $booking->payment_status = 'Paid';
 
@@ -82,7 +80,6 @@ class AdminBookingController extends Controller
 
         $booking->save();
 
-        // ===== SMS notification =====
         if ($booking->user && $booking->user->phone) {
             $vehicleName = $booking->vehicle
                 ? $booking->vehicle->Brand . ' ' . $booking->vehicle->Model
@@ -196,37 +193,47 @@ class AdminBookingController extends Controller
 
     public function approveRefund(Booking $booking)
     {
+
         if ($booking->refund_status !== 'pending') {
             return back()->with('error', 'No pending refund for this booking.');
         }
 
-        $paidAmount = (float) ($booking->paid_amount ?? 0);
+        if (!$booking->refund_requested_at) {
+            $booking->refund_requested_at = now();
+        }
+
+        $paidAmount = (float) ($booking->getOriginal('paid_amount') ?? $booking->paid_amount ?? 0);
 
         if ($paidAmount <= 0) {
             return back()->with('error', 'This booking has no recorded payment to refund.');
         }
 
-        $deductionPerMinute = 1; 
+        $deductionPerMinute = 1.0; 
 
         $minutesUsed = $booking->refund_minutes_used;
         $deduction   = $booking->refund_deduction;
 
-        if ($minutesUsed === null || $deduction === null) {
-            $now   = now();
-            $start = $booking->updated_at ?? $booking->pickup_datetime;
+        if (empty($minutesUsed) || $minutesUsed < 0 || $deduction === null || $deduction <= 0) {
+            $now = now();
+
+            $start = $booking->pickup_datetime ?? $booking->updated_at;
+
+            if ($start && ! $start instanceof Carbon) {
+                $start = Carbon::parse($start);
+            }
 
             $minutesUsed = 0;
             if ($start && $now->gt($start)) {
                 $minutesUsed = $start->diffInMinutes($now);
             }
 
-            $deduction = $minutesUsed * $deductionPerMinute;
+            $deduction = min($paidAmount, $minutesUsed * $deductionPerMinute);
         }
 
         $refundAmount = $booking->refund_amount ?? max(0, $paidAmount - $deduction);
 
-        $booking->refund_status = 'approved';
-        $booking->refund_amount = $refundAmount;
+        $booking->refund_status  = 'approved';
+        $booking->refund_amount  = $refundAmount;
         $booking->booking_status = 'Cancelled';
 
         if ($booking->vehicle) {
@@ -234,8 +241,8 @@ class AdminBookingController extends Controller
             $booking->vehicle->save();
         }
 
-        $booking->refund_minutes_used = $minutesUsed;
-        $booking->refund_deduction    = $deduction;
+        $booking->refund_minutes_used = (int) $minutesUsed;
+        $booking->refund_deduction    = (float) $deduction;
 
         $booking->save();
 

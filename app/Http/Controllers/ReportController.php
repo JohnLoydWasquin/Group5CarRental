@@ -35,17 +35,20 @@ class ReportController extends Controller
         $completedBookings = $transactions->where('booking_status', 'Completed')->count();
         $cancelledBookings = $transactions->where('booking_status', 'Cancelled')->count();
 
-        $totalRevenue = $transactions
+        $bookingRevenue = $transactions
             ->filter(function ($b) {
-                $bs = $b->booking_status;
-                $ps = strtolower($b->payment_status);
-
-                $isPaid = $ps === 'paid';
-                $isRejectedOrCancelled = in_array($bs, ['Rejected', 'Cancelled']);
-
-                return $isPaid && !$isRejectedOrCancelled;
+                return strtolower($b->payment_status) === 'paid'
+                    && $b->booking_status === 'Completed';
             })
             ->sum('total_amount');
+
+        $refundRevenue = $transactions
+            ->filter(function ($b) {
+                return $b->refund_status === 'approved' && $b->refund_deduction > 0;
+            })
+            ->sum('refund_deduction');
+
+        $totalRevenue = $bookingRevenue + $refundRevenue;
 
         $pendingRevenue = $transactions
             ->filter(function ($b) {
@@ -95,6 +98,5 @@ class ReportController extends Controller
         $filename = 'car-rental-report_' . $data['from'] . '_to_' . $data['to'] . '.pdf';
 
         return $pdf->download($filename);
-        // or ->stream($filename) if you want it to open in the browser
     }
 }

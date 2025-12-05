@@ -11,27 +11,40 @@ class StaffController extends Controller
 {
     public function index()
     {
+        // Same counts as admin
         $totalCustomers = User::where('role', 'user')->count();
         $availableVehicles = Vehicle::where('availability', 1)->count();
-        $activeBookings = Booking::whereIn('booking_status', ['Pending Approval', 'Payment Submitted', 'Confirmed', 'Ongoing'])->count();
+        $activeBookings = Booking::whereIn('booking_status', [
+            'Pending Approval',
+            'Payment Submitted',
+            'Confirmed',
+            'Ongoing'
+        ])->count();
 
-        $monthlyRevenue = Booking::whereMonth('created_at', now()->month)
+        $baseRevenue = Booking::whereYear('created_at', now()->year)
             ->whereIn('booking_status', ['Confirmed', 'Ongoing', 'Completed'])
-            ->sum('total_amount');
+            ->sum('paid_amount');
 
-        $revenueTrends = Booking::select(
-            DB::raw('MONTH(created_at) as month'),
-            DB::raw('SUM(total_amount) as total')
-        )
-        ->whereYear('created_at', now()->year)
-        ->whereIn('booking_status', ['Confirmed', 'Ongoing', 'Completed'])
-        ->groupBy('month')
-        ->orderBy('month')
-        ->get()
-        ->map(function ($item) {
+        $refundFees = Booking::whereYear('refund_requested_at', now()->year)
+            ->where('refund_status', 'approved')
+            ->sum('refund_deduction');
+
+        $monthlyRevenue = $baseRevenue + $refundFees;
+
+        $revenueTrends = collect(range(1, 12))->map(function ($month) {
+            $base = Booking::whereYear('created_at', now()->year)
+                ->whereMonth('created_at', $month)
+                ->whereIn('booking_status', ['Confirmed', 'Ongoing', 'Completed'])
+                ->sum('paid_amount');
+
+            $fees = Booking::whereYear('refund_requested_at', now()->year)
+                ->whereMonth('refund_requested_at', $month)
+                ->where('refund_status', 'approved')
+                ->sum('refund_deduction');
+
             return [
-                'month' => date('M', mktime(0, 0, 0, $item->month, 1)),
-                'total' => (float) $item->total
+                'month' => date('M', mktime(0, 0, 0, $month, 1)),
+                'total' => (float) ($base + $fees),
             ];
         });
 
