@@ -27,6 +27,7 @@ class KycController extends Controller
 
     $data = $request->validate([
         'full_name'    => 'required|string|max:255',
+        'sex' => 'required|in:Male,Female,Prefer not to say',
         'birthdate'    => 'required|date|before:today',
         'address_line' => 'required|string|max:255',
         'city'         => 'required|string|max:100',

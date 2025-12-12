@@ -90,8 +90,6 @@ body { background-color: #e6eaf0ff; }
                 @endif
             </a>
         </li>
-        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#payment">Payment Methods</a></li>
-        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#settings">Settings</a></li>
     </ul>
 
     <div class="tab-content">

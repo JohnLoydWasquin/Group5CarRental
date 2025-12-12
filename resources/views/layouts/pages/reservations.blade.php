@@ -32,7 +32,6 @@
                         <th>Vehicle</th>
                         <th>Pickup → Return</th>
                         <th>Status</th>
-                        {{-- NEW: Time Used column --}}
                         <th>Time Used</th>
                         <th>Total</th>
                         <th>Actions</th>

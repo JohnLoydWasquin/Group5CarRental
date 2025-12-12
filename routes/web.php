@@ -23,6 +23,7 @@ use App\Http\Controllers\KycController;
 use App\Http\Controllers\AdminKycController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\AdminReviewController;
+use App\Http\Controllers\LocationController;
 
 // Navigator
 Route::get('/', function () {return view('layouts.pages.home');})->name('home');
@@ -71,6 +72,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reservations/{booking}/refund', [ReservationController::class, 'requestRefund'])
         ->name('reservations.refundRequest');
 });
+Route::get('/locations/search', [LocationController::class, 'search'])->name('locations.search');
 
 // Admin routing
 Route::middleware(['auth', 'role:admin'])->group(function () {
@@ -160,8 +162,8 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
 });
 
 // Review customer
-Route::middleware(['auth'])->group(function () {
-    Route::get('/rate-us', [ReviewController::class, 'index'])->name('rateus.index');
+Route::get('/rate-us', [ReviewController::class, 'index'])->name('rateus.index');
+Route::middleware(['auth'])->group(function (){
     Route::post('/rate-us', [ReviewController::class, 'store'])->name('rateus.store');
 });
 

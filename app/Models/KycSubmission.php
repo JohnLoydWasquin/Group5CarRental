@@ -12,6 +12,7 @@ class KycSubmission extends Model
     protected $fillable = [
         'user_id',
         'full_name',
+        'sex',
         'birthdate',
         'address_line',
         'city',

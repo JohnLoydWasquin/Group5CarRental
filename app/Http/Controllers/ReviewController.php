@@ -20,7 +20,12 @@ class ReviewController extends Controller
             ->latest()
             ->paginate(6);
 
-        $userReview = Review::where('user_id', $user->id)->latest()->first();
+        // Default null if user is not logged in
+        $userReview = null;
+
+        if ($user) {
+            $userReview = Review::where('user_id', $user->id)->latest()->first();
+        }
 
         return view('layouts.pages.rateus', compact(
             'averageRating',

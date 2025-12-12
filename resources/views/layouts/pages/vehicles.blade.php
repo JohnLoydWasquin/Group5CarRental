@@ -319,15 +319,24 @@
               <div class="row g-2">
                 <div class="col-12" id="pickupOnly{{ $vehicle->VehicleID }}">
                   <label class="fw-semibold text-secondary mb-2">Pick-up Location</label>
-                  <input type="text" class="form-control" id="pickupLocation{{ $vehicle->VehicleID }}" placeholder="Enter pickup location">
+                  <input type="text"
+                      class="form-control js-location-autocomplete js-pickup-location"
+                      id="pickupLocation{{ $vehicle->VehicleID }}"
+                      placeholder="Province, city">
                 </div>
                 <div class="col-md-6" id="pickupDifferent{{ $vehicle->VehicleID }}" style="display:none;">
                   <label class="fw-semibold text-secondary mb-2">Pick-up Location</label>
-                  <input type="text" class="form-control" id="pickupLocationDiff{{ $vehicle->VehicleID }}">
+                  <input type="text"
+                      class="form-control js-location-autocomplete js-pickup-location"
+                      id="pickupLocationDiff{{ $vehicle->VehicleID }}"
+                      placeholder="Province, city">
                 </div>
                 <div class="col-md-6" id="dropoffDifferent{{ $vehicle->VehicleID }}" style="display:none;">
                   <label class="fw-semibold text-secondary mb-2">Drop-off Location</label>
-                  <input type="text" class="form-control" id="dropoffLocationDiff{{ $vehicle->VehicleID }}">
+                  <input type="text"
+                      class="form-control js-location-autocomplete js-dropoff-location"
+                      id="dropoffLocationDiff{{ $vehicle->VehicleID }}"
+                      placeholder="Province, city">
                 </div>
               </div>
             </div>
@@ -554,10 +563,8 @@
               @csrf
               <input type="hidden" name="VehicleID" value="{{ $vehicle->VehicleID }}">
 
-              {{-- ⭐ NEW: hidden dropoff_location to be filled by JS --}}
               <input type="hidden" name="dropoff_location" id="dropoffLocationHidden{{ $vehicle->VehicleID }}">
 
-              {{-- SAME LOCATION UI AS BOOKING --}}
               <div class="mb-3">
                 <select class="form-select" id="locationTypeReserve{{ $vehicle->VehicleID }}">
                   <option value="same">Same Drop-off Location</option>
@@ -568,19 +575,24 @@
                   <div class="row g-2">
                     <div class="col-12" id="pickupOnlyReserve{{ $vehicle->VehicleID }}">
                       <label class="fw-semibold text-secondary mb-2">Pick-up Location</label>
-                      <input type="text" class="form-control"
-                             id="pickupLocationReserve{{ $vehicle->VehicleID }}"
-                             name="pickup_location">
+                      <input type="text"
+                        class="form-control js-location-autocomplete js-pickup-location"
+                        id="pickupLocationReserve{{ $vehicle->VehicleID }}"
+                        name="pickup_location" placeholder="Province, city">
                     </div>
                     <div class="col-md-6" id="pickupDifferentReserve{{ $vehicle->VehicleID }}" style="display:none;">
                       <label class="fw-semibold text-secondary mb-2">Pick-up Location</label>
-                      <input type="text" class="form-control"
-                             id="pickupLocationDiffReserve{{ $vehicle->VehicleID }}">
+                      <input type="text"
+                            class="form-control js-location-autocomplete js-pickup-location"
+                            id="pickupLocationDiffReserve{{ $vehicle->VehicleID }}"
+                            placeholder="Enter pickup location" placeholder="Province, city">
                     </div>
                     <div class="col-md-6" id="dropoffDifferentReserve{{ $vehicle->VehicleID }}" style="display:none;">
                       <label class="fw-semibold text-secondary mb-2">Drop-off Location</label>
-                      <input type="text" class="form-control"
-                             id="dropoffLocationDiffReserve{{ $vehicle->VehicleID }}">
+                      <input type="text"
+                            class="form-control js-location-autocomplete js-dropoff-location"
+                            id="dropoffLocationDiffReserve{{ $vehicle->VehicleID }}"
+                            placeholder="Enter drop-off location" placeholder="Province, city">
                     </div>
                   </div>
                 </div>
@@ -704,6 +716,95 @@
 
 
 <div id="vehicleData" data-vehicles='@json($vehicles->items())'></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    const token = csrfMeta ? csrfMeta.content : '';
+
+    // ✅ Always correct URL (no matter where app is hosted)
+    const searchUrl = "{{ route('locations.search') }}";
+
+    document.querySelectorAll('.js-location-autocomplete').forEach(function (input) {
+        let dropdown = null;
+
+        input.addEventListener('input', function () {
+            const query = this.value.trim();
+
+            if (query.length < 2) {
+                closeDropdown();
+                return;
+            }
+
+            fetch(`${searchUrl}?q=${encodeURIComponent(query)}`, {
+                headers: {
+                    'X-CSRF-TOKEN': token,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+            })
+                .then(res => res.json())
+                .then(data => {
+                    console.log('Locations result:', data); // 👀 debug in console
+                    showDropdown(this, data);
+                })
+                .catch(err => console.error('Locations search error:', err));
+        });
+
+        input.addEventListener('blur', function () {
+            setTimeout(closeDropdown, 200);
+        });
+
+        function showDropdown(inputEl, items) {
+            closeDropdown();
+
+            if (!items.length) return;
+
+            dropdown = document.createElement('div');
+            dropdown.className = 'list-group position-absolute w-100 shadow-sm bg-white';
+            dropdown.style.zIndex = 9999;
+            dropdown.style.maxHeight = '220px';
+            dropdown.style.overflowY = 'auto';
+
+            items.forEach(function (item) {
+                const div = document.createElement('button');
+                div.type = 'button';
+                div.className = 'list-group-item list-group-item-action small text-start';
+
+                let label = item.name;
+                if (item.type === 'airport' && item.code) {
+                    label += ` (${item.code})`;
+                } else if (item.province) {
+                    label += `, ${item.province}`;
+                }
+
+                div.textContent = label;
+
+                div.addEventListener('click', function () {
+                    inputEl.value = label;
+                    closeDropdown();
+                });
+
+                dropdown.appendChild(div);
+            });
+
+            // parent needs to be relative to position dropdown correctly
+            const parent = inputEl.parentElement;
+            if (getComputedStyle(parent).position === 'static') {
+                parent.style.position = 'relative';
+            }
+            parent.appendChild(dropdown);
+        }
+
+        function closeDropdown() {
+            if (dropdown && dropdown.parentNode) {
+                dropdown.parentNode.removeChild(dropdown);
+                dropdown = null;
+            }
+        }
+    });
+});
+</script>
 
 <script src="{{ asset('js/vehicles.js') }}"></script>
 @endsection
