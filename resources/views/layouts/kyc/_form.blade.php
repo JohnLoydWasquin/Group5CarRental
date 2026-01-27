@@ -1,3 +1,14 @@
+@php
+    $locked = in_array($user->kyc_status, ['Pending', 'Approved']);
+@endphp
+
+@php
+    $status = $user->kyc_status;
+    $isViewOnly = in_array($status, ['Pending', 'Approved']);
+    $canResubmit = $status === 'Rejected';
+@endphp
+
+
 <div class="card kyc-card">
     <div class="card-body">
 
@@ -38,89 +49,133 @@
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Full name</label>
-                    <input type="text"
-                           name="full_name"
-                           class="form-control @error('full_name') is-invalid @enderror"
-                           value="{{ old('full_name', $kyc->full_name ?? $user->name) }}"
-                           required>
-                    @error('full_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <input type="text" name="full_name"
+                        class="form-control"
+                        value="{{ old('full_name', $kyc->full_name ?? $user->name) }}"
+                        {{ $locked ? 'readonly' : '' }} required>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Sex</label>
+
+                    @if($locked)
+                        <select class="form-select" disabled>
+                            <option>{{ $kyc->sex }}</option>
+                        </select>
+
+                        <input type="hidden" name="sex" value="{{ $kyc->sex }}">
+                    @else
+                        <select name="sex" class="form-select" required>
+                            <option value="">Select</option>
+                            @foreach(['Male','Female','Prefer not to say'] as $sex)
+                                <option value="{{ $sex }}"
+                                    {{ old('sex') === $sex ? 'selected' : '' }}>
+                                    {{ $sex }}
+                                </option>
+                            @endforeach
+                        </select>
+                    @endif
                 </div>
 
                 <div class="col-md-3">
                     <label class="form-label">Birthdate</label>
-                    <input type="date"
-                           name="birthdate"
-                           class="form-control @error('birthdate') is-invalid @enderror"
-                           value="{{ old('birthdate', optional($kyc->birthdate ?? null)->format('Y-m-d')) }}">
-                    @error('birthdate')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <input type="date" id="birthdate" name="birthdate"
+                        class="form-control"
+                        value="{{ old('birthdate', $kyc?->birthdate?->format('Y-m-d')) }}"
+                        {{ $locked ? 'readonly' : '' }} required>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Age</label>
+                    <input type="text" id="age" class="form-control" readonly>
                 </div>
             </div>
 
             {{-- Address --}}
-            <h5 class="fw-bold mb-3 mt-4">Address</h5>
+            <h5 class="fw-bold mt-4">Address</h5>
 
-            <div class="mb-3">
-                <label class="form-label">Address line</label>
-                <input type="text"
-                       name="address_line"
-                       class="form-control @error('address_line') is-invalid @enderror"
-                       value="{{ old('address_line', $kyc->address_line ?? $user->address) }}"
-                       required>
-                @error('address_line')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label>Country</label>
+                    <select name="country" class="form-select" {{ $locked ? 'readonly' : '' }}>
+                        <option value="Philippines" selected>Philippines</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="mt-3">
+                    <label>Address Line (Street / Barangay)</label>
+                    <input type="text"
+                        name="address_line"
+                        class="form-control"
+                        value="{{ old('address_line', $kyc?->address_line ?? '') }}"
+                        {{ $locked ? 'readonly' : '' }}
+                        required>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6 position-relative">
+                        <label class="form-label">City</label>
+                        <input type="text"
+                            name="city"
+                            id="kyc_city"
+                            class="form-control js-location-autocomplete"
+                            value="{{ old('city', $kyc?->city ?? '') }}"
+                            {{ $locked ? 'readonly' : '' }}
+                            required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Province</label>
+                        <input type="text"
+                            name="province"
+                            id="kyc_province"
+                            class="form-control js-location-autocomplete"
+                            value="{{ old('province', $kyc?->province ?? '') }}"
+                            {{ $locked ? 'readonly' : '' }}
+                            required>
+                    </div>
+                </div>
             </div>
 
-            <div class="row g-3 mb-3">
-                <div class="col-md-4">
-                    <label class="form-label">City</label>
-                    <input type="text"
-                           name="city"
-                           class="form-control @error('city') is-invalid @enderror"
-                           value="{{ old('city', $kyc->city ?? '') }}"
-                           required>
-                    @error('city')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Province</label>
-                    <input type="text"
-                           name="province"
-                           class="form-control @error('province') is-invalid @enderror"
-                           value="{{ old('province', $kyc->province ?? '') }}"
-                           required>
-                    @error('province')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Postal code</label>
-                    <input type="text"
-                           name="postal_code"
-                           class="form-control @error('postal_code') is-invalid @enderror"
-                           value="{{ old('postal_code', $kyc->postal_code ?? '') }}">
-                    @error('postal_code')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
+            <div class="mt-3">
+                <label>Postal Code</label>
+                <input type="text"
+                    name="postal_code"
+                    class="form-control"
+                    value="{{ old('postal_code', $kyc?->postal_code ?? '') }}"
+                    maxlength="4"
+                    pattern="\d{4}"
+                    inputmode="numeric"
+                    placeholder="e.g. 1000"
+                    {{ $locked ? 'readonly' : '' }}
+                    required>
+                <small class="text-muted">
+                    Philippine postal codes are 4 digits.
+                </small>
             </div>
 
             {{-- ID details --}}
-            <h5 class="fw-bold mb-3 mt-4">ID Details</h5>
+            <h5 class="fw-bold mt-4">ID Details</h5>
 
-            <div class="row g-3 mb-3">
+            <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="form-label">ID type</label>
-                    <input type="text"
-                           name="id_type"
-                           class="form-control @error('id_type') is-invalid @enderror"
-                           value="{{ old('id_type', $kyc->id_type ?? '') }}"
-                           placeholder="e.g. Driver's License, Passport"
-                           required>
-                    @error('id_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <label>ID Type</label>
+                    <select id="id_type" name="id_type" class="form-select" {{ $locked ? 'readonly' : '' }} required>
+                        <option value="">Select</option>
+                        <option value="Passport">Passport</option>
+                        <option value="Driver License">Driver License</option>
+                        <option value="National ID">National ID</option>
+                    </select>
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label">ID number</label>
-                    <input type="text"
-                           name="id_number"
-                           class="form-control @error('id_number') is-invalid @enderror"
-                           value="{{ old('id_number', $kyc->id_number ?? '') }}"
-                           required>
-                    @error('id_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <label>ID Number</label>
+                    <input type="text" id="id_number" name="id_number"
+                        class="form-control"
+                        value="{{ old('id_number', $kyc->id_number ?? '') }}"
+                        {{ $locked ? 'readonly' : '' }} required>
+                    <div class="invalid-feedback" id="idError"></div>
                 </div>
             </div>
 
@@ -209,3 +264,47 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    /* AGE */
+    const birthdate = document.getElementById('birthdate');
+    if (birthdate) {
+        birthdate.addEventListener('change', function () {
+            const dob = new Date(this.value);
+            const today = new Date();
+            let age = today.getFullYear() - dob.getFullYear();
+            const m = today.getMonth() - dob.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+            document.getElementById('age').value = age >= 0 ? age : '';
+        });
+    }
+
+    /* ID VALIDATION */
+    const rules = {
+        'Passport': 9,
+        'Driver License': 11,
+        'National ID': 12
+    };
+
+    const idType = document.getElementById('id_type');
+    const idNum  = document.getElementById('id_number');
+
+    if (idType && idNum) {
+        idNum.addEventListener('input', function () {
+            const limit = rules[idType.value];
+            if (limit && this.value.length > limit) {
+                this.classList.add('is-invalid');
+                document.getElementById('idError').innerText =
+                    `${idType.value} must be exactly ${limit} characters`;
+            } else {
+                this.classList.remove('is-invalid');
+            }
+        });
+    }
+});
+</script>
+
+<script src="{{ asset('js/location-autocomplete.js') }}"></script>
+

@@ -102,14 +102,6 @@
             <header class="flex justify-between items-center bg-white p-4 shadow-sm">
                 <h2 class="text-2xl font-bold text-gray-800">Dashboard</h2>
                 <div class="flex items-center gap-6">
-                    <button class="relative">
-                        <i data-lucide="bell" class="w-6 h-6 text-gray-600 hover:text-gray-800"></i>
-                        <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full"></span>
-                    </button>
-
-                    <button>
-                        <i data-lucide="settings" class="w-6 h-6 text-gray-600 hover:text-gray-800"></i>
-                    </button>
 
                     <div class="h-6 border-l border-gray-300"></div>
 

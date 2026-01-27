@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="locations-search-url" content="{{ route('locations.search') }}">
     <title>RideNow | AutoPiloto Car Rentals</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
@@ -38,7 +39,6 @@
     document.addEventListener("DOMContentLoaded", function () {
         const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-        // ✅ Automatically attach CSRF token to all fetch calls
         const _fetch = window.fetch;
         window.fetch = function (url, options = {}) {
             options.headers = Object.assign({

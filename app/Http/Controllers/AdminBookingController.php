@@ -17,11 +17,29 @@ class AdminBookingController extends Controller
     }
 
     // Display all bookings
-    public function index()
+    public function index(Request $request)
     {
-        $bookings = Booking::with('user', 'vehicle')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $query = Booking::with(['user', 'vehicle'])
+            ->orderBy('created_at', 'desc');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('booking_id', 'like', "%{$search}%")
+                  ->orWhereHas('user', function ($u) use ($search) {
+                      $u->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('vehicle', function ($v) use ($search) {
+                      $v->where('Brand', 'like', "%{$search}%")
+                        ->orWhere('Model', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $bookings = $query
+            ->paginate(3)
+            ->withQueryString();
 
         return view('layouts.authorities.adminBooking', compact('bookings'));
     }
@@ -267,7 +285,9 @@ class AdminBookingController extends Controller
 
     public function show(string $booking_id)
     {
-        $booking = Booking::with(['user', 'vehicle'])->where('booking_id', $booking_id)->firstOrFail();
+        $booking = Booking::with(['user', 'vehicle'])
+            ->where('booking_id', $booking_id)
+            ->firstOrFail();
 
         return view('layouts.authorities.showBookings', compact('booking'));
     }

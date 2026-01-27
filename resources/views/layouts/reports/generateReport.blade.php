@@ -85,6 +85,50 @@
     </div>
 </div>
 
+{{-- 🚗 CAR INVENTORY ANALYTICS --}}
+<div class="bg-white rounded-lg shadow mb-6">
+    <div class="px-4 py-3 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-800">
+            Car Inventory – Most Rented Vehicles
+        </h2>
+        <p class="text-xs text-gray-500">
+            Based on completed bookings from {{ $from }} to {{ $to }}
+        </p>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-2 text-left">Rank</th>
+                    <th class="px-4 py-2 text-left">Vehicle</th>
+                    <th class="px-4 py-2 text-center">Total Rentals</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                @forelse($mostRentedVehicles as $index => $item)
+                    <tr>
+                        <td class="px-4 py-2 font-semibold">#{{ $index + 1 }}</td>
+                        <td class="px-4 py-2">
+                            {{ $item->vehicle->Brand ?? '' }}
+                            {{ $item->vehicle->Model ?? 'Vehicle #'.$item->VehicleID }}
+                        </td>
+                        <td class="px-4 py-2 text-center font-bold text-blue-600">
+                            {{ $item->total_rentals }}
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="3" class="px-4 py-4 text-center text-gray-500">
+                            No completed rentals in this period.
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
 {{-- Transactions table --}}
 <div class="bg-white rounded-lg shadow overflow-hidden">
     <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">

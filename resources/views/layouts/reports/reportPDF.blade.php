@@ -127,6 +127,34 @@
         </tr>
     </table>
 
+    <h3>Car Inventory – Most Rented Vehicles</h3>
+
+<table class="transactions">
+    <thead>
+        <tr>
+            <th>Rank</th>
+            <th>Vehicle</th>
+            <th>Total Rentals</th>
+        </tr>
+    </thead>
+    <tbody>
+        @forelse($mostRentedVehicles as $index => $item)
+            <tr>
+                <td>#{{ $index + 1 }}</td>
+                <td>
+                    {{ $item->vehicle->Brand ?? '' }}
+                    {{ $item->vehicle->Model ?? 'Vehicle #'.$item->VehicleID }}
+                </td>
+                <td class="text-center">{{ $item->total_rentals }}</td>
+            </tr>
+        @empty
+            <tr>
+                <td colspan="3" class="text-center">No data available</td>
+            </tr>
+        @endforelse
+    </tbody>
+</table>
+
     <br><br>
 
     <h3>Transactions</h3>

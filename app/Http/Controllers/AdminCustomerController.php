@@ -12,7 +12,7 @@ class AdminCustomerController extends Controller
     {
         $customers = User::where('role', 'user')
             ->latest()
-            ->paginate(10);
+            ->paginate(3);
 
         return view('layouts.authorities.customers', compact('customers'));
     }

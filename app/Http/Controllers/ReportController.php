@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Booking;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
@@ -66,6 +67,19 @@ class ReportController extends Controller
             })
             ->sum('total_amount');
 
+        $mostRentedVehicles = Booking::select(
+        'VehicleID',
+        DB::raw('COUNT(*) as total_rentals')
+            )
+            ->whereDate('pickup_datetime', '>=', $from)
+            ->whereDate('return_datetime', '<=', $to)
+            ->where('booking_status', 'Completed')
+            ->groupBy('VehicleID')
+            ->orderByDesc('total_rentals')
+            ->with('vehicle')
+            ->limit(5)
+            ->get();
+
         return compact(
             'transactions',
             'from',
@@ -78,6 +92,7 @@ class ReportController extends Controller
             'totalRevenue',
             'pendingRevenue',
             'rejectedAmount',
+            'mostRentedVehicles',
         );
     }
 

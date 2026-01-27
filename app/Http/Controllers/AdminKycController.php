@@ -7,17 +7,24 @@ use Illuminate\Http\Request;
 
 class AdminKycController extends Controller
 {
-    // public function __construct()
-    // {
-    //     $this->middleware(['auth', 'role:admin']);
-    // }
-
-    public function index()
+    public function index(Request $request)
     {
-        $submissions = KycSubmission::with('user')
+        $query = KycSubmission::with('user');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->whereHas('user', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $submissions = $query
             ->orderByRaw("FIELD(status, 'Pending', 'Rejected', 'Approved')")
             ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->paginate(3)
+            ->withQueryString();
 
         return view('layouts.authorities.accountVerify', compact('submissions'));
     }
@@ -25,7 +32,6 @@ class AdminKycController extends Controller
     public function show(KycSubmission $submission)
     {
         $submission->load('user');
-
         return view('layouts.authorities.showVerify', compact('submission'));
     }
 
@@ -35,12 +41,12 @@ class AdminKycController extends Controller
             'admin_notes' => 'nullable|string|max:2000',
         ]);
 
-        $submission->status = 'Approved';
-        $submission->admin_notes = $request->admin_notes;
-        $submission->save();
+        $submission->update([
+            'status' => 'Approved',
+            'admin_notes' => $request->admin_notes,
+        ]);
 
-        $submission->user->kyc_status = 'Approved';
-        $submission->user->save();
+        $submission->user->update(['kyc_status' => 'Approved']);
 
         return redirect()
             ->route('admin.kyc.show', $submission->id)
@@ -53,12 +59,12 @@ class AdminKycController extends Controller
             'admin_notes' => 'required|string|max:2000',
         ]);
 
-        $submission->status = 'Rejected';
-        $submission->admin_notes = $request->admin_notes;
-        $submission->save();
+        $submission->update([
+            'status' => 'Rejected',
+            'admin_notes' => $request->admin_notes,
+        ]);
 
-        $submission->user->kyc_status = 'Rejected';
-        $submission->user->save();
+        $submission->user->update(['kyc_status' => 'Rejected']);
 
         return redirect()
             ->route('admin.kyc.show', $submission->id)

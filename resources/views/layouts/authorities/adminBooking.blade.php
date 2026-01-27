@@ -6,6 +6,17 @@
 
     <h1 class="text-2xl font-bold text-gray-800">Bookings</h1>
 
+    <form method="GET" action="{{ route('admin.bookings') }}" class="mt-4 flex justify-end">
+        <input
+            type="text"
+            name="search"
+            value="{{ request('search') }}"
+            placeholder="Search booking, customer, vehicle..."
+            class="border rounded-lg px-3 py-2 w-72
+                focus:outline-none focus:ring focus:ring-indigo-400"
+        >
+    </form>
+
     @if(session('success'))
         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
             {{ session('success') }}
@@ -221,4 +232,7 @@
         </div>
     @endif
 @endforeach
+<div class="mt-6">
+    {{ $bookings->links() }}
+</div>
 @endsection
